@@ -93,8 +93,7 @@ static GParamSpec *properties[NUM_PROPERTIES] = { NULL, };
 
 G_DEFINE_TYPE (NemoToolbar, nemo_toolbar, GTK_TYPE_BOX);
 
-static void
-nemo_toolbar_update_root_state (NemoToolbar *self)
+static void nemo_toolbar_update_root_state (NemoToolbar *self)
 {
     if (geteuid() == 0 && g_settings_get_boolean (nemo_preferences, NEMO_PREFERENCES_SHOW_ROOT_WARNING)) {
         if (self->priv->show_root_bar != TRUE) {
@@ -113,8 +112,7 @@ static void showHideButton(gtk::Button& button, const char* preferenceName)
         button.show();
 }
 
-static void
-toolbar_update_appearance (NemoToolbar *selfPublic)
+static void toolbar_update_appearance (NemoToolbar *selfPublic)
 {
 	_NemoToolbarPriv& self = *selfPublic->priv;
 
@@ -177,8 +175,7 @@ toolbar_update_appearance (NemoToolbar *selfPublic)
         self.view_box->show();
 }
 
-static void
-setup_root_info_bar (NemoToolbar *self) {
+static void setup_root_info_bar (NemoToolbar *self) {
 
     GtkWidget *root_bar = gtk_info_bar_new ();
     gtk_info_bar_set_message_type (GTK_INFO_BAR (root_bar), GTK_MESSAGE_ERROR);
@@ -192,8 +189,7 @@ setup_root_info_bar (NemoToolbar *self) {
     gtk_box_pack_start (GTK_BOX (self), self->priv->root_bar, TRUE, TRUE, 0);
 }
 
-static void
-nemo_toolbar_constructed (GObject *obj)
+static void nemo_toolbar_constructed (GObject *obj)
 {
 	NemoToolbar *self = NEMO_TOOLBAR (obj);
     _NemoToolbarPriv& selfPriv = *self->priv;
@@ -394,19 +390,14 @@ nemo_toolbar_constructed (GObject *obj)
 	toolbar_update_appearance (self);
 }
 
-static void
-nemo_toolbar_init (NemoToolbar *self)
+static void nemo_toolbar_init (NemoToolbar *self)
 {
 	self->priv = G_TYPE_INSTANCE_GET_PRIVATE (self, NEMO_TYPE_TOOLBAR,
 						  NemoToolbarPriv);
 	self->priv->show_main_bar = TRUE;	
 }
 
-static void
-nemo_toolbar_get_property (GObject *object,
-			       guint property_id,
-			       GValue *value,
-			       GParamSpec *pspec)
+static void nemo_toolbar_get_property (GObject *object, guint property_id, GValue *value, GParamSpec *pspec)
 {
 	NemoToolbar *self = NEMO_TOOLBAR (object);
 
@@ -423,11 +414,7 @@ nemo_toolbar_get_property (GObject *object,
 	}
 }
 
-static void
-nemo_toolbar_set_property (GObject *object,
-			       guint property_id,
-			       const GValue *value,
-			       GParamSpec *pspec)
+static void nemo_toolbar_set_property (GObject *object, guint property_id, const GValue *value, GParamSpec *pspec)
 {
 	NemoToolbar *self = NEMO_TOOLBAR (object);
 
@@ -457,11 +444,31 @@ nemo_toolbar_dispose (GObject *obj)
 	g_signal_handlers_disconnect_by_func (nemo_preferences,
 					      (gpointer)toolbar_update_appearance, self);
 
+    delete self->priv->toolbar;
+    delete self->priv->previous_button;
+    delete self->priv->next_button;
+    delete self->priv->up_button;
+    delete self->priv->refresh_button;
+    delete self->priv->home_button;
+    delete self->priv->computer_button;
+    delete self->priv->toggle_location_button;
+    delete self->priv->open_terminal_button;
+    delete self->priv->new_folder_button;
+    delete self->priv->search_button;
+    delete self->priv->icon_view_button;
+    delete self->priv->list_view_button;
+    delete self->priv->compact_view_button;
+    delete self->priv->show_thumbnails_button;
+    delete self->priv->navigation_box;
+    delete self->priv->refresh_box;
+    delete self->priv->location_box;
+    delete self->priv->view_box;
+    delete self->priv->stack;
+
 	G_OBJECT_CLASS (nemo_toolbar_parent_class)->dispose (obj);
 }
 
-static void
-nemo_toolbar_class_init (NemoToolbarClass *klass)
+static void nemo_toolbar_class_init (NemoToolbarClass *klass)
 {
 	GObjectClass *oclass;
 
@@ -495,8 +502,7 @@ nemo_toolbar_class_init (NemoToolbarClass *klass)
 	g_object_class_install_properties (oclass, NUM_PROPERTIES, properties);
 }
 
-GtkWidget *
-nemo_toolbar_new (GtkActionGroup *action_group)
+GtkWidget * nemo_toolbar_new (GtkActionGroup *action_group)
 {
 	return (GtkWidget*)g_object_new (NEMO_TYPE_TOOLBAR,
 			     "action-group", action_group,
@@ -504,29 +510,25 @@ nemo_toolbar_new (GtkActionGroup *action_group)
 			     NULL);
 }
 
-GtkWidget *
-nemo_toolbar_get_path_bar (NemoToolbar *self)
+GtkWidget * nemo_toolbar_get_path_bar (NemoToolbar *self)
 {
 	return self->priv->path_bar;
 }
 
-GtkWidget *
-nemo_toolbar_get_location_bar (NemoToolbar *self)
+GtkWidget * nemo_toolbar_get_location_bar (NemoToolbar *self)
 {
 	return self->priv->location_bar;
 }
 
-gboolean
-nemo_toolbar_get_show_location_entry (NemoToolbar *self)
+gboolean nemo_toolbar_get_show_location_entry (NemoToolbar *self)
 {
 	return self->priv->show_location_entry;
 }
 
-void
-nemo_toolbar_set_show_main_bar (NemoToolbar *self,
-				    gboolean show_main_bar)
+void nemo_toolbar_set_show_main_bar (NemoToolbar *self, gboolean show_main_bar)
 {
-	if (show_main_bar != self->priv->show_main_bar) {
+	if (show_main_bar != self->priv->show_main_bar)
+    {
 		self->priv->show_main_bar = show_main_bar;
 		toolbar_update_appearance (self);
 
@@ -534,9 +536,7 @@ nemo_toolbar_set_show_main_bar (NemoToolbar *self,
 	}
 }
 
-void
-nemo_toolbar_set_show_location_entry (NemoToolbar *self,
-					  gboolean show_location_entry)
+void nemo_toolbar_set_show_location_entry (NemoToolbar *self, gboolean show_location_entry)
 {
 	if (show_location_entry != self->priv->show_location_entry) {
 		self->priv->show_location_entry = show_location_entry;
