@@ -4,7 +4,13 @@ namespace gtk
 {
     Widget::Widget(){}
 
-    Widget::~Widget(){}
+    Widget::~Widget()
+    {
+        if(GTK_IS_WIDGET(widget))
+        {
+            gtk_widget_destroy(widget); //I know this shouldn't be needed
+        }
+    }
 
     void Widget::show()
     {
