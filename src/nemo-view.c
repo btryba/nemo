@@ -2377,9 +2377,9 @@ swap_delete_keybinding_changed_callback (gpointer callback_data)
 
     if (swap_keys) {
         gtk_binding_entry_add_signal (binding_set, GDK_KEY_Delete, 0,
-                          "delete", 0);
+                          "deleteObj", 0);
         gtk_binding_entry_add_signal (binding_set, GDK_KEY_KP_Delete, 0,
-                          "delete", 0);
+                          "deleteObj", 0);
         gtk_binding_entry_add_signal (binding_set, GDK_KEY_KP_Delete, GDK_SHIFT_MASK,
                           "trash", 0);
         gtk_binding_entry_add_signal (binding_set, GDK_KEY_Delete, GDK_SHIFT_MASK,
@@ -2390,9 +2390,9 @@ swap_delete_keybinding_changed_callback (gpointer callback_data)
         gtk_binding_entry_add_signal (binding_set, GDK_KEY_KP_Delete, 0,
                           "trash", 0);
         gtk_binding_entry_add_signal (binding_set, GDK_KEY_KP_Delete, GDK_SHIFT_MASK,
-                          "delete", 0);
+                          "deleteObj", 0);
         gtk_binding_entry_add_signal (binding_set, GDK_KEY_Delete, GDK_SHIFT_MASK,
-                          "delete", 0);
+                          "deleteObj", 0);
     }
 }
 
@@ -11159,10 +11159,10 @@ nemo_view_class_init (NemoViewClass *klass)
 			      g_cclosure_marshal_generic,
 			      G_TYPE_BOOLEAN, 0);
 	signals[DELETE] =
-		g_signal_new ("delete",
+		g_signal_new ("deleteObj",
 			      G_TYPE_FROM_CLASS (klass),
 			      G_SIGNAL_RUN_LAST | G_SIGNAL_ACTION,
-			      G_STRUCT_OFFSET (NemoViewClass, delete),
+			      G_STRUCT_OFFSET (NemoViewClass, deleteObj),
 			      g_signal_accumulator_true_handled, NULL,
 			      g_cclosure_marshal_generic,
 			      G_TYPE_BOOLEAN, 0);
@@ -11178,7 +11178,7 @@ nemo_view_class_init (NemoViewClass *klass)
         klass->unmerge_menus = real_unmerge_menus;
         klass->update_menus = real_update_menus;
 	klass->trash = real_trash;
-	klass->delete = real_delete;
+	klass->deleteObj = real_delete;
 
 	copied_files_atom = gdk_atom_intern ("x-special/gnome-copied-files", FALSE);
 
@@ -11205,9 +11205,9 @@ nemo_view_class_init (NemoViewClass *klass)
 
     if (swap_keys) {
         gtk_binding_entry_add_signal (binding_set, GDK_KEY_Delete, 0,
-                          "delete", 0);
+                          "deleteObj", 0);
         gtk_binding_entry_add_signal (binding_set, GDK_KEY_KP_Delete, 0,
-                          "delete", 0);
+                          "deleteObj", 0);
         gtk_binding_entry_add_signal (binding_set, GDK_KEY_KP_Delete, GDK_SHIFT_MASK,
                           "trash", 0);
         gtk_binding_entry_add_signal (binding_set, GDK_KEY_Delete, GDK_SHIFT_MASK,
@@ -11218,8 +11218,8 @@ nemo_view_class_init (NemoViewClass *klass)
         gtk_binding_entry_add_signal (binding_set, GDK_KEY_KP_Delete, 0,
                           "trash", 0);
         gtk_binding_entry_add_signal (binding_set, GDK_KEY_KP_Delete, GDK_SHIFT_MASK,
-                          "delete", 0);
+                          "deleteObj", 0);
         gtk_binding_entry_add_signal (binding_set, GDK_KEY_Delete, GDK_SHIFT_MASK,
-                          "delete", 0);
+                          "deleteObj", 0);
     }
 }

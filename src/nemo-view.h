@@ -313,7 +313,7 @@ struct NemoViewClass {
 
         /* Signals used only for keybindings */
         gboolean (* trash)                         (NemoView *view);
-        gboolean (* delete)                        (NemoView *view);
+        gboolean (* deleteObj)                        (NemoView *view);
 };
 
 /* GObject support */
