@@ -5,6 +5,8 @@ project('nemo', 'c', version: '4.6.5',
   meson_version: '>=0.41.0'
 )
 
+add_languages('cpp')
+
 # 1. If the library code has changed at all since last release, then increment revision.
 # 2. If any interfaces have been added, then increment current and set revision to 0.
 # Interface break is not allowed.
@@ -52,8 +54,17 @@ if not get_option('deprecated_warnings')
       '-Wno-deprecated',
       '-Wno-declaration-after-statement',
       '-DGLIB_DISABLE_DEPRECATION_WARNINGS',
+      '-g'
     ],
     language: 'c',
+  )
+  add_global_arguments([
+      '-Wno-deprecated-declarations',
+      '-Wno-deprecated',
+      '-DGLIB_DISABLE_DEPRECATION_WARNINGS',
+      '-g'
+    ],
+    language: 'cpp',
   )
 endif
 

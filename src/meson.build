@@ -61,7 +61,7 @@ nemoCommon_sources = [
   'nemo-self-check-functions.c',
   'nemo-statusbar.c',
   'nemo-thumbnail-problem-bar.c',
-  'nemo-toolbar.c',
+  'nemo-toolbar.cpp',
   'nemo-trash-bar.c',
   'nemo-tree-sidebar-model.c',
   'nemo-tree-sidebar.c',
