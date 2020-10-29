@@ -14,9 +14,21 @@ nemoBuiltSources = gnome.gdbus_codegen(
   object_manager: true
 )
 
+gtkWrapperSources = [
+  'gtk_box.cpp',
+  'gtk_button.cpp',
+  'gtk_container.cpp',
+  'gtk_stack.cpp',
+  'gtk_stylecontext.cpp',
+  'gtk_toolbar.cpp',
+  'gtk_toolitem.cpp',
+  'gtk_widget.cpp',
+]
+
 nemoCommon_sources = [
   dbusBuiltSources,
   nemoBuiltSources,
+  gtkWrapperSources,
   'nemo-action-config-widget.c',
   'nemo-application.c',
   'nemo-blank-desktop-window.c',
