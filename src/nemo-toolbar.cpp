@@ -134,12 +134,12 @@ namespace nemo
         stack.add_named(location_bar, "location_bar");
         hbox->show_all();
 
-        //LEAK
         gtk::ToolItem* tool_box = new gtk::ToolItem();
         tool_box->set_expand(true);
         tool_box->add(hbox);
         toolbar.add(tool_box);
         tool_box->show();
+        toolbar.takeOnOwnership(tool_box); //So that the c++ wrapper doesn't leak
 
         // Search/Open in Terminal/New Folder/Toggle Location 
         box = new gtk::Box(GTK_ORIENTATION_HORIZONTAL);
