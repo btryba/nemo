@@ -2,11 +2,12 @@
 
 namespace gtk
 {
-    Widget::Widget(){}
+    Widget::Widget() : WidgetControlsWidgetPointer{true}
+    {}
 
     Widget::~Widget()
     {
-        if(GTK_IS_WIDGET(widget))
+        if(GTK_IS_WIDGET(widget) && WidgetControlsWidgetPointer)
         {
             gtk_widget_destroy(widget); //I know this shouldn't be needed
         }

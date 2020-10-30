@@ -9,6 +9,7 @@ namespace gtk
     {
         public:
         Button(bool createToggle, const char *name, GtkActionGroup* actionGroup);
+        Button(){}
         virtual ~Button();
     };
 }

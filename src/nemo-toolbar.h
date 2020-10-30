@@ -41,36 +41,35 @@
 	(G_TYPE_INSTANCE_GET_CLASS ((obj), NEMO_TYPE_TOOLBAR, NemoToolbarClass))
 
 typedef struct _NemoToolbar NemoToolbar;
-typedef struct _NemoToolbarPriv NemoToolbarPriv;
 typedef struct _NemoToolbarClass NemoToolbarClass;
 
-typedef enum {
+typedef enum
+{
 	NEMO_TOOLBAR_MODE_PATH_BAR,
 	NEMO_TOOLBAR_MODE_LOCATION_BAR,
 } NemoToolbarMode;
 
-struct _NemoToolbar {
+struct _NemoToolbar
+{
 	GtkBox parent;
 
-	/* private */
-	NemoToolbarPriv *priv;
+	void* cppParent;
 };
 
-struct _NemoToolbarClass {
+struct _NemoToolbarClass
+{
 	GtkBoxClass parent_class;
 };
 
-GType nemo_toolbar_get_type (void);
+GType nemo_toolbar_get_type(void);
 
-GtkWidget *nemo_toolbar_new (GtkActionGroup *action_group);
+GtkWidget *nemo_toolbar_new(GtkActionGroup *action_group);
 
-gboolean  nemo_toolbar_get_show_location_entry (NemoToolbar *self);
-GtkWidget *nemo_toolbar_get_path_bar (NemoToolbar *self);
-GtkWidget *nemo_toolbar_get_location_bar (NemoToolbar *self);
+gboolean  nemo_toolbar_get_show_location_entry(NemoToolbar *self);
+GtkWidget *nemo_toolbar_get_path_bar(NemoToolbar *self);
+GtkWidget *nemo_toolbar_get_location_bar(NemoToolbar *self);
 
-void nemo_toolbar_set_show_main_bar (NemoToolbar *self,
-					 gboolean show_main_bar);
-void nemo_toolbar_set_show_location_entry (NemoToolbar *self,
-					       gboolean show_location_entry);
+void nemo_toolbar_set_show_main_bar(NemoToolbar *self, gboolean show_main_bar);
+void nemo_toolbar_set_show_location_entry(NemoToolbar *self, gboolean show_location_entry);
 
 #endif /* __NEMO_TOOLBAR_H__ */

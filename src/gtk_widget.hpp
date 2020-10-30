@@ -8,6 +8,7 @@ namespace gtk
     class Widget
     {
         protected:
+        bool WidgetControlsWidgetPointer;
         GtkWidget* widget;
 
         public:

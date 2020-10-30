@@ -9,6 +9,7 @@ namespace gtk
     {
         public:
         Box(GtkOrientation orientation);
+        Box(GtkBox* original);
         virtual ~Box();
         void pack_start(Widget* child);
     };

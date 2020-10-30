@@ -83,8 +83,7 @@ static const GtkTargetEntry drop_types [] = {
 	{ NEMO_DND_TEXT_PLAIN_TYPE, 0, NEMO_DND_TEXT_PLAIN },
 };
 
-G_DEFINE_TYPE (NemoLocationBar, nemo_location_bar,
-	       GTK_TYPE_BOX);
+G_DEFINE_TYPE (NemoLocationBar, nemo_location_bar, GTK_TYPE_BOX);
 
 static NemoWindow *
 nemo_location_bar_get_window (GtkWidget *bar)
@@ -100,11 +99,8 @@ nemo_location_bar_get_window (GtkWidget *bar)
 static GFile *
 nemo_location_bar_get_location (NemoLocationBar *bar)
 {
-	char *user_location;
-	GFile *location;
-
-	user_location = gtk_editable_get_chars (GTK_EDITABLE (bar->details->entry), 0, -1);
-	location = g_file_parse_name (user_location);
+	char *user_location = gtk_editable_get_chars (GTK_EDITABLE (bar->details->entry), 0, -1);
+	GFile *location = g_file_parse_name (user_location);
 	g_free (user_location);
 
 	return location;
@@ -113,9 +109,7 @@ nemo_location_bar_get_location (NemoLocationBar *bar)
 static void
 emit_location_changed (NemoLocationBar *bar)
 {
-	GFile *location;
-
-	location = nemo_location_bar_get_location (bar);
+	GFile *location = nemo_location_bar_get_location (bar);
 	g_signal_emit (bar, signals[LOCATION_CHANGED], 0, location);
 	g_object_unref (location);
 }
@@ -367,8 +361,7 @@ finalize (GObject *object)
 	G_OBJECT_CLASS (nemo_location_bar_parent_class)->finalize (object);
 }
 
-static void
-nemo_location_bar_class_init (NemoLocationBarClass *klass)
+static void nemo_location_bar_class_init (NemoLocationBarClass *klass)
 {
 	GObjectClass *gobject_class;
 	GtkBindingSet *binding_set;
@@ -455,12 +448,9 @@ nemo_location_bar_init (NemoLocationBar *bar)
 	gtk_widget_show_all (GTK_WIDGET (bar));
 }
 
-GtkWidget *
-nemo_location_bar_new (void)
+GtkWidget * nemo_location_bar_new (void)
 {
-	GtkWidget *bar;
-
-	bar = gtk_widget_new (NEMO_TYPE_LOCATION_BAR, NULL);
+	GtkWidget* bar = gtk_widget_new (NEMO_TYPE_LOCATION_BAR, NULL);
 
 	return bar;
 }
