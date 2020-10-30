@@ -10,4 +10,9 @@ namespace gtk
     {
         gtk_style_context_add_class(context, className);
     }
+
+    void StyleContext::invalidate()
+    {
+        gtk_style_context_invalidate(context);
+    }
 }

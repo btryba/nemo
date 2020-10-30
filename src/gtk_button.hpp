@@ -1,16 +1,17 @@
 #ifndef __GTK_BUTTON_HPP__
 #define __GTK_BUTTON_HPP__
 
-#include "gtk_widget.hpp"
+#include "gtk_container.hpp"
 
 namespace gtk
 {
-    class Button : public Widget
+    class Button : public Container
     {
         public:
         Button(bool createToggle, const char *name, GtkActionGroup* actionGroup);
-        Button(){}
+        Button();
         virtual ~Button();
+        void set_focus_on_click(bool setFocus);
     };
 }
 

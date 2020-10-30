@@ -16,6 +16,7 @@ namespace gtk
         StyleContext(GtkStyleContext* context);
         virtual ~StyleContext();
         void add_class(const char* className);
+        void invalidate();
     };
 }
 
