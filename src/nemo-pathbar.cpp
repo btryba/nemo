@@ -46,6 +46,7 @@ extern "C"
 #include "gtk_container.hpp"
 #include "gtk_button.hpp"
 #include "gtk_image.hpp"
+#include <cstdint>
 
 namespace nemo
 {
@@ -61,15 +62,16 @@ enum {
     LAST_SIGNAL
 };
 
-typedef enum {
-    NORMAL_BUTTON,
-    ROOT_BUTTON,
-    HOME_BUTTON,
-    DESKTOP_BUTTON,
-    MOUNT_BUTTON,
-    XDG_BUTTON,
-    DEFAULT_LOCATION_BUTTON,
-} ButtonType;
+enum class ButtonType
+{
+    Normal,
+    Root,
+    Home,
+    Desktop,
+    Mount,
+    Xdg,
+    DefaultLocation,
+};
 
 #define BUTTON_DATA(x) ((ButtonData *)(x))
 
@@ -140,8 +142,8 @@ struct _NemoPathBarDetails {
 	gtk::Button *down_slider_button;
 	unsigned int settings_signal_id;
 	int slider_width;
-	gint16 spacing;
-	gint16 button_offset;
+	int16_t spacing;
+	int16_t button_offset;
 	unsigned int timer;
 	unsigned int slider_visible : 1;
 	unsigned int need_timer : 1;
@@ -1358,7 +1360,7 @@ reload_icons (NemoPathBar *path_bar)
     for (list = path_bar->priv->button_list; list; list = list->next) {
         ButtonData *button_data;
         button_data = BUTTON_DATA (list->data);
-        if (button_data->type != NORMAL_BUTTON || button_data->is_base_dir) {
+        if (button_data->type != ButtonType::Normal || button_data->is_base_dir) {
             nemo_path_bar_update_button_appearance (button_data);
         }
     }
@@ -1449,7 +1451,7 @@ button_data_free (ButtonData *button_data)
 static const char *
 get_dir_name (ButtonData *button_data)
 {
-    if (button_data->type == DESKTOP_BUTTON) {
+    if (button_data->type == ButtonType::Desktop) {
         return _("Desktop");
     /*
     }
@@ -1517,21 +1519,21 @@ nemo_path_bar_update_button_appearance (ButtonData *button_data)
 
     if (button_data->image != NULL) {
         switch (button_data->type) {
-            case ROOT_BUTTON:
+            case ButtonType::Root:
                 icon_name = g_strdup (NEMO_ICON_SYMBOLIC_FILESYSTEM);
                 break;
-            case HOME_BUTTON:
-            case DESKTOP_BUTTON:
-            case XDG_BUTTON:
+            case ButtonType::Home:
+            case ButtonType::Desktop:
+            case ButtonType::Xdg:
                 icon_name = nemo_file_get_control_icon_name (button_data->file);
                 break;
-            case NORMAL_BUTTON:
+            case ButtonType::Normal:
                 if (button_data->is_base_dir) {
                     icon_name = nemo_file_get_control_icon_name (button_data->file);
                     break;
                 }
-            case DEFAULT_LOCATION_BUTTON:
-            case MOUNT_BUTTON:
+            case ButtonType::DefaultLocation:
+            case ButtonType::Mount:
                 if (button_data->mount_icon_name) {
                     icon_name = g_strdup (button_data->mount_icon_name);
                     break;
@@ -1594,7 +1596,7 @@ setup_file_path_mounted_mount (GFile *location, ButtonData *button_data)
             if (button_data) {
                 button_data->mount_icon_name = nemo_get_mount_icon_name (mount);
                 button_data->dir_name = g_mount_get_name (mount);
-                button_data->type = MOUNT_BUTTON;
+                button_data->type = ButtonType::Mount;
                 button_data->fake_root = TRUE;
             }
             g_object_unref (root);
@@ -1607,7 +1609,7 @@ setup_file_path_mounted_mount (GFile *location, ButtonData *button_data)
             /* set mount specific details in button_data */
             if (button_data) {
                 button_data->mount_icon_name = nemo_get_mount_icon_name (mount);
-                button_data->type = DEFAULT_LOCATION_BUTTON;
+                button_data->type = ButtonType::DefaultLocation;
                 button_data->fake_root = TRUE;
             }
             g_object_unref (default_location);
@@ -1627,34 +1629,34 @@ setup_button_type (ButtonData       *button_data,
            GFile *location)
 {
     if (nemo_is_root_directory (location)) {
-        button_data->type = ROOT_BUTTON;
+        button_data->type = ButtonType::Root;
     } else if (nemo_is_home_directory (location)) {
-        button_data->type = HOME_BUTTON;
+        button_data->type = ButtonType::Home;
         button_data->fake_root = TRUE;
     } else if (nemo_is_desktop_directory (location)) {
         if (!desktop_is_home) {
-            button_data->type = DESKTOP_BUTTON;
+            button_data->type = ButtonType::Desktop;
         } else {
-            button_data->type = NORMAL_BUTTON;
+            button_data->type = ButtonType::Normal;
         }
     } else if (path_bar->priv->xdg_documents_path != NULL && g_file_equal (location, path_bar->priv->xdg_documents_path)) {
-        button_data->type = XDG_BUTTON;
+        button_data->type = ButtonType::Xdg;
     } else if (path_bar->priv->xdg_download_path != NULL && g_file_equal (location, path_bar->priv->xdg_download_path)) {
-        button_data->type = XDG_BUTTON;
+        button_data->type = ButtonType::Xdg;
     } else if (path_bar->priv->xdg_music_path != NULL && g_file_equal (location, path_bar->priv->xdg_music_path)) {
-        button_data->type = XDG_BUTTON;
+        button_data->type = ButtonType::Xdg;
     } else if (path_bar->priv->xdg_pictures_path != NULL && g_file_equal (location, path_bar->priv->xdg_pictures_path)) {
-        button_data->type = XDG_BUTTON;
+        button_data->type = ButtonType::Xdg;
     } else if (path_bar->priv->xdg_templates_path != NULL && g_file_equal (location, path_bar->priv->xdg_templates_path)) {
-        button_data->type = XDG_BUTTON;
+        button_data->type = ButtonType::Xdg;
     } else if (path_bar->priv->xdg_videos_path != NULL && g_file_equal (location, path_bar->priv->xdg_videos_path)) {
-        button_data->type = XDG_BUTTON;
+        button_data->type = ButtonType::Xdg;
     } else if (path_bar->priv->xdg_public_path != NULL && g_file_equal (location, path_bar->priv->xdg_public_path)) {
-        button_data->type = XDG_BUTTON;
+        button_data->type = ButtonType::Xdg;
     } else if (setup_file_path_mounted_mount (location, button_data)) {
         /* already setup */
     } else {
-        button_data->type = NORMAL_BUTTON;
+        button_data->type = ButtonType::Normal;
     }
 }
 
@@ -1806,7 +1808,7 @@ button_data_file_changed (NemoFile *file,
     g_object_unref (location);
 
     /* MOUNTs use the GMount as the name, so don't update for those */
-    if (button_data->type != MOUNT_BUTTON) {
+    if (button_data->type != ButtonType::Mount) {
         display_name = nemo_file_get_display_name (file);
         if (g_strcmp0 (display_name, button_data->dir_name) != 0) {
             g_free (button_data->dir_name);
@@ -1846,21 +1848,21 @@ make_directory_button (NemoPathBar  *path_bar,
     button_data->image = gtk_image_new ();
 
     switch (button_data->type) {
-        case ROOT_BUTTON:
+        case ButtonType::Root:
             child = button_data->image;
             button_data->label = NULL;
             break;
-        case HOME_BUTTON:
-        case DESKTOP_BUTTON:
-        case MOUNT_BUTTON:
-        case DEFAULT_LOCATION_BUTTON:
+        case ButtonType::Home:
+        case ButtonType::Desktop:
+        case ButtonType::Mount:
+        case ButtonType::DefaultLocation:
             button_data->label = gtk_label_new (NULL);
             child = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 2);
             gtk_box_pack_start (GTK_BOX (child), button_data->image, FALSE, FALSE, 0);
             gtk_box_pack_start (GTK_BOX (child), button_data->label, FALSE, FALSE, 0);
             break;
-        case XDG_BUTTON:
-        case NORMAL_BUTTON:
+        case ButtonType::Xdg:
+        case ButtonType::Normal:
         default:
             button_data->label = gtk_label_new (NULL);
             child = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 2);
