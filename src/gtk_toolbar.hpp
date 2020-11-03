@@ -9,6 +9,7 @@ namespace gtk
     {
         public:
         ToolBar();
+        ToolBar(GtkToolbar* original, bool callAddReference = true);
         virtual ~ToolBar();
     };
 }

@@ -7,6 +7,9 @@ namespace gtk
         widget = gtk_stack_new();
     }
 
+    Stack::Stack(GtkStack* original, bool callAddReference)
+        : Container((GtkContainer*)original, callAddReference){}
+
     Stack::~Stack(){}
 
     void Stack::set_transition_type(GtkStackTransitionType type)
@@ -19,9 +22,9 @@ namespace gtk
         gtk_stack_set_transition_duration((GtkStack*)widget, duration);
     }
 
-    void Stack::add_named(Widget* childWidget, const char* childName)
+    void Stack::add_named(Widget& childWidget, const char* childName)
     {
-        gtk_stack_add_named((GtkStack*)widget, childWidget->getPtr(), childName);
+        gtk_stack_add_named((GtkStack*)widget, childWidget.getPtr(), childName);
     }
 
     void Stack::add_named(GtkWidget* childWidget, const char* childName)

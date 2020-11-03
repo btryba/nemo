@@ -7,6 +7,9 @@ namespace gtk
         widget = (GtkWidget*)gtk_tool_item_new();
     }
 
+    ToolItem::ToolItem(GtkToolItem* original, bool callAddReference)
+        : Container((GtkContainer*)original, callAddReference){}
+
     ToolItem::~ToolItem() {}
     
     void ToolItem::set_expand(bool setTo)

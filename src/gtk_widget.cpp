@@ -2,13 +2,23 @@
 
 namespace gtk
 {
-    Widget::Widget() : WidgetControlsWidgetPointer{true}
+    Widget::Widget() : DeletePtrOnDestructor{true}
     {}
+
+    Widget::Widget(GtkWidget* original, bool callAddReference)
+    {
+        if(callAddReference)
+            widget = (GtkWidget*)g_object_ref(original);
+        else
+            widget = original;
+    }
 
     Widget::~Widget()
     {
-        if(GTK_IS_WIDGET(widget) && WidgetControlsWidgetPointer)
-            gtk_widget_destroy(widget); //I know this shouldn't be needed
+        g_object_unref(widget);
+
+        // if(GTK_IS_WIDGET(widget) && DeletePtrOnDestructor)
+        //     gtk_widget_destroy(widget); //I know this shouldn't be needed
 
         for(gtk::Widget* pointer : ownedPtrs)
             delete pointer;
@@ -107,5 +117,50 @@ namespace gtk
     void Widget::setPtr(void* pointer)
     {
         widget = (GtkWidget*)pointer;
+    }
+
+    bool Widget::ptrAddressesMatch(void* pointer)
+    {
+        return pointer == widget;
+    }
+
+    void Widget::set_has_window(bool toSet)
+    {
+        gtk_widget_set_has_window (widget, toSet);
+    }
+
+    void Widget::set_redraw_on_allocate(bool toSet)
+    {
+        gtk_widget_set_redraw_on_allocate(widget, toSet);
+    }
+
+    void Widget::drag_dest_set()
+    {
+        gtk_drag_dest_set (widget, (GtkDestDefaults)0, nullptr, 0, (GdkDragAction)0);
+    }
+
+    void Widget::drag_dest_set_track_motion(bool toSet)
+    {
+        gtk_drag_dest_set_track_motion (widget, toSet);
+    }
+
+    void Widget::set_tooltip_text(const char* text)
+    {
+        gtk_widget_set_tooltip_text (widget, text);
+    }
+
+    bool Widget::isNull()
+    {
+        return widget == nullptr;
+    }
+
+    PangoLayout* Widget::create_pango_layout(const char* name)
+    {
+        return gtk_widget_create_pango_layout(widget, name);
+    }
+
+    void Widget::drag_source_set(GdkModifierType startButtonMask, const GtkTargetEntry *targets, int n_targets, GdkDragAction actions)
+    {
+        gtk_drag_source_set(widget, startButtonMask, targets, n_targets, actions);
     }
 }

@@ -9,9 +9,9 @@ namespace gtk
     {
         public:
         Box(GtkOrientation orientation);
-        Box(GtkBox* original);
+        Box(GtkBox* original, bool callAddReference = true);
         virtual ~Box();
-        void pack_start(Widget* child);
+        void pack_start(Widget& child, bool expand = true, bool fill = true, unsigned int padding = 0);
     };
 }
 

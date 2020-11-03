@@ -7,16 +7,13 @@ namespace gtk
         widget = gtk_box_new (orientation, 0);
     }
 
-    Box::Box(GtkBox* original)
-    {
-        widget = (GtkWidget*)original;
-        WidgetControlsWidgetPointer = false;
-    }
+    Box::Box(GtkBox* original, bool callAddReferenece)
+        : Container((GtkContainer*)original, callAddReferenece){}
 
     Box::~Box() {}
     
-    void Box::pack_start(Widget* child)
+    void Box::pack_start(Widget& child, bool expand, bool fill, unsigned int padding)
     {
-        gtk_box_pack_start ((GtkBox*)widget, child->getPtr(), true, true, 0);
+        gtk_box_pack_start ((GtkBox*)widget, child.getPtr(), expand, fill, padding);
     }
 }

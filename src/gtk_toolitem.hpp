@@ -9,6 +9,7 @@ namespace gtk
     {
         public:
         ToolItem();
+        ToolItem(GtkToolItem* original, bool callAddReference = true);
         virtual ~ToolItem();
         void set_expand(bool setTo);
     };

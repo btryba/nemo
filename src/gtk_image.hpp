@@ -8,7 +8,9 @@ namespace gtk
     struct Image : public Widget
     {
         public:
+        Image();
         Image(const char* name, GtkIconSize iconSize);
+        Image(GtkImage* original, bool callAddReference = true);
     };
 }
 
