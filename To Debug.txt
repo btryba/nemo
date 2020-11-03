@@ -1,0 +1,7 @@
+Steps to Debug:
+Open Nemo Window and delete build directory
+CLOSE ALL NEMO WINDOWS
+run cmd `meson build`
+Debugging should work now.
+
+Break point in nemo_window_new will show if you actually are debugging.
