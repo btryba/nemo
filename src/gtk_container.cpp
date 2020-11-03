@@ -2,6 +2,8 @@
 
 namespace gtk
 {
+    Container::Container(){}
+
     Container::Container(GtkContainer* original, bool callAddReference)
         : Widget((GtkWidget*)original, callAddReference){}
 

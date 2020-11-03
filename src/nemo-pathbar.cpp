@@ -49,9 +49,9 @@ extern "C"
 
 namespace nemo
 {
-    class PathBar : gtk::Container
+    struct PathBar : public gtk::Container
     {
-
+        PathBar(GtkContainer* cClass) : gtk::Container(cClass){}
     };
 }
 
@@ -186,7 +186,7 @@ static gtk::Button* get_slider_button (NemoPathBar *path_bar, GtkPositionType po
     else
         image = new gtk::Image{"pan-end-symbolic", GTK_ICON_SIZE_MENU};
     button->takeOnOwnership(image);
-    button->add(image);
+    button->add(*image);
     gtk_container_add (GTK_CONTAINER (path_bar), button->getPtr());
     button->show_all();
 
@@ -319,6 +319,9 @@ static void
 nemo_path_bar_init (NemoPathBar *path_bar)
 {
     char *p;
+
+    nemo::PathBar* cppClass = new nemo::PathBar((GtkContainer*)path_bar);
+    path_bar->cppParent = cppClass;
 
     path_bar->priv = G_TYPE_INSTANCE_GET_PRIVATE (path_bar, NEMO_TYPE_PATH_BAR, NemoPathBarDetails);
 
@@ -472,6 +475,12 @@ nemo_path_bar_get_preferred_width (GtkWidget *widget,
 
     *minimum += path_bar->priv->slider_width * 2;
     *natural += path_bar->priv->slider_width * 2;
+}
+
+GtkWidget* nemo_path_bar_new()
+{
+    NemoPathBar* cClass = (NemoPathBar*)g_object_new (NEMO_TYPE_PATH_BAR, nullptr); //calls init
+    return (GtkWidget*)cClass;
 }
 
 static void

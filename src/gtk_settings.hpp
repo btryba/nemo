@@ -8,13 +8,14 @@ extern "C"
 
 namespace gtk
 {
+    struct Widget;
     struct Settings
     {
         GtkSettings* settings;
 
         public:
         Settings(GtkSettings* original);
-        unsigned int connect(const char* signal, GCallback callBack, Widget widget);
+        unsigned int connect(const char* signal, GCallback callBack, Widget* widget);
     };
 }
 

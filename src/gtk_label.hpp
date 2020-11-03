@@ -13,7 +13,7 @@ namespace gtk
         void set_text(const char* text);
         void set_label(const char* label);
         void set_use_markup(bool toUse);
-    }
+    };
 }
 
 #endif //__GTK_LABEL_HPP__

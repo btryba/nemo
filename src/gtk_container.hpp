@@ -8,6 +8,7 @@ namespace gtk
     class Container : public Widget
     {
         public:
+        Container();
         Container(GtkContainer* original, bool callAddReference = true);
         void add(Widget& widgetToAdd);
         void remove(Widget& widgetToRemove);
