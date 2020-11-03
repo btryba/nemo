@@ -1,4 +1,5 @@
 #include "gtk_widget.hpp"
+#include "gtk_settings.hpp"
 
 namespace gtk
 {
@@ -79,9 +80,24 @@ namespace gtk
         ownedPtrs.push_back(pointer);
     }
 
-    void Widget::get_preferred_width(int& width)
+    void Widget::get_preferred_width(int& minimumWidth)
     {
-        gtk_widget_get_preferred_width(widget, &width, nullptr);
+        gtk_widget_get_preferred_width(widget, &minimumWidth, nullptr);
+    }
+
+    void Widget::get_preferred_width(int& minimumWidth, int& naturalWidth)
+    {
+        gtk_widget_get_preferred_width(widget, &minimumWidth, &naturalWidth);
+    }
+
+    void Widget::get_preferred_height(int& minimumHeight)
+    {
+        gtk_widget_get_preferred_height(widget, &minimumHeight, nullptr);
+    }
+
+    void Widget::get_preferred_height(int& minimumHeight, int& naturalHeight)
+    {
+        gtk_widget_get_preferred_height(widget, &minimumHeight, &minimumHeight);
     }
 
     void Widget::set_sensitive(bool toSet)
@@ -162,5 +178,10 @@ namespace gtk
     void Widget::drag_source_set(GdkModifierType startButtonMask, const GtkTargetEntry *targets, int n_targets, GdkDragAction actions)
     {
         gtk_drag_source_set(widget, startButtonMask, targets, n_targets, actions);
+    }
+
+    Settings Widget::getSettings()
+    {
+        return Settings{gtk_settings_get_for_screen(gtk_widget_get_screen(widget))};
     }
 }

@@ -6,6 +6,7 @@
 
 namespace gtk
 {
+    struct Settings;
     class Widget
     {
         protected:
@@ -29,7 +30,10 @@ namespace gtk
         void set_visible(bool toShow);
         void add_events(GdkEventMask eventFlags);
         void takeOnOwnership(Widget* pointer);
-        void get_preferred_width(int& width);
+        void get_preferred_width(int& minimumWidth);
+        void get_preferred_width(int& minimumWidth, int& naturalWidth);
+        void get_preferred_height(int& minimumHeight);
+        void get_preferred_height(int& minimumHeight, int& naturalHeight);
         void set_sensitive(bool toSet);
         bool has_focus();
         void get_allocation(GtkAllocation* allocation);
@@ -46,6 +50,7 @@ namespace gtk
         bool isNull();
         PangoLayout* create_pango_layout(const char* name);
         void drag_source_set(GdkModifierType startButtonMask,const GtkTargetEntry *targets, int n_targets, GdkDragAction actions);
+        Settings getSettings();
     };
 }
 

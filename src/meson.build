@@ -21,6 +21,7 @@ gtkWrapperSources = [
   'gtk_file.cpp',
   'gtk_image.cpp',
   'gtk_label.cpp',
+  'gtk_settings.cpp',
   'gtk_stack.cpp',
   'gtk_stylecontext.cpp',
   'gtk_togglebutton.cpp',
