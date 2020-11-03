@@ -8,6 +8,7 @@
 #include "gtk_stack.hpp"
 #include "gtk_box.hpp"
 #include "gtk_toolbar.hpp"
+#include "gtk_togglebutton.hpp"
 
 namespace gtk
 {
@@ -58,11 +59,11 @@ namespace nemo
         gtk::Button toggle_location_button;
         gtk::Button open_terminal_button;
         gtk::Button new_folder_button;
-        gtk::Button search_button;
-        gtk::Button show_thumbnails_button;
-        gtk::Button icon_view_button;
-        gtk::Button list_view_button;
-        gtk::Button compact_view_button;
+        gtk::ToggleButton search_button;
+        gtk::ToggleButton show_thumbnails_button;
+        gtk::ToggleButton icon_view_button;
+        gtk::ToggleButton list_view_button;
+        gtk::ToggleButton compact_view_button;
 
         gtk::ToolItem navigation_box;
         gtk::ToolItem refresh_box;

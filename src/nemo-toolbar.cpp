@@ -58,20 +58,20 @@ namespace nemo
 {
     Toolbar::Toolbar(GtkBox* cClass, GtkActionGroup* actionGroup) : gtk::Box(cClass),
         action_group(actionGroup),
-        previous_button{false, NEMO_ACTION_BACK, action_group},
-        next_button{false, NEMO_ACTION_FORWARD, action_group},
-        up_button{false, NEMO_ACTION_UP, action_group}, 
-        refresh_button{false, NEMO_ACTION_RELOAD, action_group},
-        home_button{false, NEMO_ACTION_HOME, action_group}, 
-        computer_button{false, NEMO_ACTION_COMPUTER, action_group},
-        toggle_location_button{false, NEMO_ACTION_TOGGLE_LOCATION, action_group}, 
-        open_terminal_button{false, NEMO_ACTION_OPEN_IN_TERMINAL, action_group},
-        new_folder_button{false, NEMO_ACTION_NEW_FOLDER, action_group},
-        search_button{true, NEMO_ACTION_SEARCH, action_group},
-        show_thumbnails_button{true, NEMO_ACTION_SHOW_THUMBNAILS, action_group},
-        icon_view_button{true, NEMO_ACTION_ICON_VIEW, action_group},
-        list_view_button{true, NEMO_ACTION_LIST_VIEW, action_group},
-        compact_view_button{true, NEMO_ACTION_COMPACT_VIEW, action_group},
+        previous_button{NEMO_ACTION_BACK, action_group},
+        next_button{NEMO_ACTION_FORWARD, action_group},
+        up_button{NEMO_ACTION_UP, action_group}, 
+        refresh_button{NEMO_ACTION_RELOAD, action_group},
+        home_button{NEMO_ACTION_HOME, action_group}, 
+        computer_button{NEMO_ACTION_COMPUTER, action_group},
+        toggle_location_button{NEMO_ACTION_TOGGLE_LOCATION, action_group}, 
+        open_terminal_button{NEMO_ACTION_OPEN_IN_TERMINAL, action_group},
+        new_folder_button{NEMO_ACTION_NEW_FOLDER, action_group},
+        search_button{NEMO_ACTION_SEARCH, action_group},
+        show_thumbnails_button{NEMO_ACTION_SHOW_THUMBNAILS, action_group},
+        icon_view_button{NEMO_ACTION_ICON_VIEW, action_group},
+        list_view_button{NEMO_ACTION_LIST_VIEW, action_group},
+        compact_view_button{NEMO_ACTION_COMPACT_VIEW, action_group},
         show_main_bar{true}
     {
         gtk_style_context_set_junction_sides (gtk_widget_get_style_context (GTK_WIDGET (widget)), GTK_JUNCTION_BOTTOM);
@@ -81,40 +81,40 @@ namespace nemo
 	    // add the UI 
         ui_manager.insert_action_group(action_group);
 
-	    pack_start(&toolbar);
+	    pack_start(toolbar);
         toolbar.get_style_context()->add_class(GTK_STYLE_CLASS_PRIMARY_TOOLBAR);
 	
         // Back/Forward/Up 
         gtk::Box* box = new gtk::Box(GTK_ORIENTATION_HORIZONTAL);
 
-        box->add(&previous_button);
-        box->add(&next_button);
-        box->add(&up_button);
+        box->add(previous_button);
+        box->add(next_button);
+        box->add(up_button);
         box->get_style_context()->add_class(GTK_STYLE_CLASS_RAISED);
         box->get_style_context()->add_class(GTK_STYLE_CLASS_LINKED);
-        navigation_box.add(box);
-        toolbar.add(&navigation_box);
+        navigation_box.add(*box);
+        toolbar.add(navigation_box);
         navigation_box.show_all();
         navigation_box.set_margin_right(6);
 
         // Refresh 
         box = new gtk::Box(GTK_ORIENTATION_HORIZONTAL);
-        box->add(&refresh_button);
+        box->add(refresh_button);
         box->get_style_context()->add_class(GTK_STYLE_CLASS_RAISED);
 
-        refresh_box.add(box);
-        toolbar.add(&refresh_box);
+        refresh_box.add(*box);
+        toolbar.add(refresh_box);
         refresh_box.show_all();
         refresh_box.set_margin_right(6);
 
         // Home/Computer 
         box = new gtk::Box(GTK_ORIENTATION_HORIZONTAL);
-        box->add(&home_button);
-        box->add(&computer_button);
+        box->add(home_button);
+        box->add(computer_button);
         box->get_style_context()->add_class(GTK_STYLE_CLASS_RAISED);
         box->get_style_context()->add_class(GTK_STYLE_CLASS_LINKED);
-        location_box.add(box);
-        toolbar.add(&location_box);
+        location_box.add(*box);
+        toolbar.add(location_box);
         location_box.show_all();
         location_box.set_margin_right(6);
 
@@ -124,9 +124,9 @@ namespace nemo
 
         // Regular Path Bar 
         gtk::Box* hbox = new gtk::Box(GTK_ORIENTATION_HORIZONTAL);
-        hbox->pack_start(&stack);
+        hbox->pack_start(stack);
 
-        path_bar = (GtkWidget*)g_object_new (NEMO_TYPE_PATH_BAR, nullptr);
+        path_bar = nemo_path_bar_new();
         stack.add_named(path_bar, "path_bar");
     
         // Entry-Like Location Bar 
@@ -136,22 +136,22 @@ namespace nemo
 
         gtk::ToolItem* tool_box = new gtk::ToolItem();
         tool_box->set_expand(true);
-        tool_box->add(hbox);
-        toolbar.add(tool_box);
+        tool_box->add(*hbox);
+        toolbar.add(*tool_box);
         tool_box->show();
         toolbar.takeOnOwnership(tool_box); //So that the c++ wrapper doesn't leak
 
         // Search/Open in Terminal/New Folder/Toggle Location 
         box = new gtk::Box(GTK_ORIENTATION_HORIZONTAL);
-        box->add(&toggle_location_button);
-        box->add(&open_terminal_button);
-        box->add(&new_folder_button);
-        box->add(&search_button);
-        box->add(&show_thumbnails_button);
+        box->add(toggle_location_button);
+        box->add(open_terminal_button);
+        box->add(new_folder_button);
+        box->add(search_button);
+        box->add(show_thumbnails_button);
         box->get_style_context()->add_class(GTK_STYLE_CLASS_RAISED);
         box->get_style_context()->add_class(GTK_STYLE_CLASS_LINKED);
-        tools_box.add(box);
-        toolbar.add(&tools_box);
+        tools_box.add(*box);
+        toolbar.add(tools_box);
         tools_box.show_all();
         tools_box.set_margin_left(6);
 
@@ -159,13 +159,13 @@ namespace nemo
 
         // View Select 
         box = new gtk::Box(GTK_ORIENTATION_HORIZONTAL);
-        box->add(&icon_view_button);
-        box->add(&list_view_button);
-        box->add(&compact_view_button);
+        box->add(icon_view_button);
+        box->add(list_view_button);
+        box->add(compact_view_button);
         box->get_style_context()->add_class(GTK_STYLE_CLASS_RAISED);
         box->get_style_context()->add_class(GTK_STYLE_CLASS_LINKED);
-        view_box.add(box);
-        toolbar.add(&view_box);
+        view_box.add(*box);
+        toolbar.add(view_box);
         view_box.show_all();
         view_box.set_margin_left(6);
 
