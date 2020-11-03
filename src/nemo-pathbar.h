@@ -40,6 +40,8 @@ struct _NemoPathBar
 	GtkContainer parent;
 	
 	NemoPathBarDetails *priv;
+
+	void* cppParent;
 };
 
 struct _NemoPathBarClass
@@ -58,5 +60,6 @@ gboolean nemo_path_bar_set_path    (NemoPathBar *path_bar, GFile *file);
 GFile *  nemo_path_bar_get_path_for_button (NemoPathBar *path_bar,
 						GtkWidget       *button);
 void     nemo_path_bar_clear_buttons (NemoPathBar *path_bar);
+GtkWidget* nemo_path_bar_new();
 
 #endif /* NEMO_PATHBAR_H */
