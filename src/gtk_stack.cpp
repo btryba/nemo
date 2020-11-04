@@ -3,9 +3,7 @@
 namespace gtk
 {
     Stack::Stack()
-    {
-        widget = gtk_stack_new();
-    }
+        : Container((GtkContainer*)gtk_stack_new(), false){}
 
     Stack::Stack(GtkStack* original, bool callAddReference)
         : Container((GtkContainer*)original, callAddReference){}

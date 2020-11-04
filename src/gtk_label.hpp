@@ -7,12 +7,14 @@ namespace gtk
 {
     struct Label : public Widget
     {
-        Label(GtkLabel* original, bool callAddReference = true);
+        Label(const char* text);
+        Label(GtkLabel* original, bool callAddReference);
         bool get_use_markup();
         void set_markup(char* markup);
         void set_text(const char* text);
         void set_label(const char* label);
         void set_use_markup(bool toUse);
+        void set_ellipsize(PangoEllipsizeMode size);
     };
 }
 

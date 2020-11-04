@@ -2,6 +2,9 @@
 
 namespace gtk
 {
+    Label::Label(const char* text) : Widget{gtk_label_new(text), false}
+    {}
+
     Label::Label(GtkLabel* original, bool callAddReference)
         :Widget((GtkWidget*)original, callAddReference){}
         
@@ -28,5 +31,10 @@ namespace gtk
     void Label::set_use_markup(bool toUse)
     {
        gtk_label_set_use_markup((GtkLabel*)widget, toUse);
+    }
+
+    void Label::set_ellipsize(PangoEllipsizeMode size)
+    {
+        gtk_label_set_ellipsize ((GtkLabel*)widget, size);
     }
 }

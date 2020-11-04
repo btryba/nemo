@@ -2,10 +2,11 @@
 
 namespace gtk
 {
-    Box::Box(GtkOrientation orientation)
-    {
-        widget = gtk_box_new (orientation, 0);
-    }
+    Box::Box(GtkOrientation orientation) : Container{(GtkContainer*)gtk_box_new (orientation, 0), false}
+    {}
+
+    Box::Box(GtkOrientation orientation, int spacing): Container{(GtkContainer*)gtk_box_new (orientation, spacing), false}
+    {}
 
     Box::Box(GtkBox* original, bool callAddReferenece)
         : Container((GtkContainer*)original, callAddReferenece){}

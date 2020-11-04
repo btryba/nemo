@@ -20,14 +20,8 @@ namespace gtk
     Button::Button(GtkButton* original, bool callAddReference)
         : Container ((GtkContainer*)original, callAddReference){}
 
-    Button::Button()
-    {
-        widget = gtk_button_new();
-    }
-    Button::~Button()
-    {
-
-    }
+    Button::Button(): Container ((GtkContainer*)gtk_button_new(), false){}
+    Button::~Button() {}
     void Button::set_focus_on_click(bool setFocus)
     {
         gtk_button_set_focus_on_click ((GtkButton*)widget, setFocus);

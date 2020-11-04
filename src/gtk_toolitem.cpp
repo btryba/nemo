@@ -3,9 +3,7 @@
 namespace gtk
 {
     ToolItem::ToolItem()
-    {
-        widget = (GtkWidget*)gtk_tool_item_new();
-    }
+        : Container((GtkContainer*)gtk_tool_item_new(), false){}
 
     ToolItem::ToolItem(GtkToolItem* original, bool callAddReference)
         : Container((GtkContainer*)original, callAddReference){}

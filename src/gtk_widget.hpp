@@ -14,8 +14,6 @@ namespace gtk
         std::vector<gtk::Widget*> ownedPtrs;
 
         public:
-        bool DeletePtrOnDestructor;
-
         Widget();
         Widget(GtkWidget* original, bool callAddReference = true);
         virtual ~Widget();

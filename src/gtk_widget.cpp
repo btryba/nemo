@@ -3,8 +3,7 @@
 
 namespace gtk
 {
-    Widget::Widget() : DeletePtrOnDestructor{true}
-    {}
+    Widget::Widget() {}
 
     Widget::Widget(GtkWidget* original, bool callAddReference)
     {

@@ -3,11 +3,10 @@
 namespace gtk
 {
     ToggleButton::ToggleButton(const char *name, GtkActionGroup* actionGroup)
+        : Button((GtkButton*)gtk_toggle_button_new(), false){}
     {
         GtkWidget *image;
         GtkAction *action;
-
-        widget = gtk_toggle_button_new();
 
         image = gtk_image_new();
 
@@ -21,9 +20,8 @@ namespace gtk
         : Button((GtkButton*)original, callAddReference){}
 
     ToggleButton::ToggleButton()
-    {
-        widget = gtk_toggle_button_new();
-    }
+        : Button((GtkButton*)gtk_toggle_button_new(), false){}
+    
     ToggleButton::~ToggleButton()
     {
 

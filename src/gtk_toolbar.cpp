@@ -3,9 +3,7 @@
 namespace gtk
 {
     ToolBar::ToolBar()
-    {
-        widget = gtk_toolbar_new();
-    }
+        : Container((GtkContainer*)gtk_toolbar_new(), false){}
 
     ToolBar::ToolBar(GtkToolbar* original, bool callAddReference)
         : Container((GtkContainer*)original, callAddReference){}
