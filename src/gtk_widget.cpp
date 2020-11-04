@@ -16,7 +16,8 @@ namespace gtk
 
     Widget::~Widget()
     {
-        g_object_unref(widget);
+        if(G_IS_OBJECT(widget)) //If it is already removed from last container this will not be true
+            g_object_unref(widget);
 
         // if(GTK_IS_WIDGET(widget) && DeletePtrOnDestructor)
         //     gtk_widget_destroy(widget); //I know this shouldn't be needed
