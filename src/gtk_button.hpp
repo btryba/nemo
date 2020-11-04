@@ -29,6 +29,7 @@ namespace gtk
                 return "drag_motion";
             else if(eventType == ButtonEventType::DragLeave)
                 return "drag_leave";
+            return "";
         }
     };
 

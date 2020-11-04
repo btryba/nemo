@@ -110,14 +110,14 @@ namespace gtk
         return gtk_widget_has_focus(widget);
     }
 
-    void Widget::get_allocation(GtkAllocation* allocation)
+    void Widget::get_allocation(GtkAllocation& allocation)
     {
-        gtk_widget_get_allocation (widget, allocation);
+        gtk_widget_get_allocation (widget, &allocation);
     }
 
-    void Widget::size_allocate(GtkAllocation* allocation)
+    void Widget::size_allocate(GtkAllocation& allocation)
     {
-        gtk_widget_size_allocate(widget, allocation);
+        gtk_widget_size_allocate(widget, &allocation);
     }
 
     bool Widget::get_child_visible()
@@ -184,4 +184,14 @@ namespace gtk
     {
         return Settings{gtk_settings_get_for_screen(gtk_widget_get_screen(widget))};
     }
+
+    void Widget::queue_resize()
+    {
+        gtk_widget_queue_resize(widget);
+    }
+
+     GtkTextDirection Widget::get_direction()
+     {
+         return gtk_widget_get_direction(widget);
+     }
 }

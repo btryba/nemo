@@ -17,6 +17,7 @@ namespace gtk
         virtual ~File();
 
         bool operator==(File otherFile);
+        bool operator!=(File otherFile);
         GFile* getPtr();
         //Checks the beginning of the path so if /foo is the prefix /foo/bar will return true
         bool has_prefix(File* prefix);

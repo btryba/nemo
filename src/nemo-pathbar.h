@@ -26,7 +26,6 @@
 
 typedef struct _NemoPathBar      NemoPathBar;
 typedef struct _NemoPathBarClass NemoPathBarClass;
-typedef struct _NemoPathBarDetails NemoPathBarDetails;
 
 #define NEMO_TYPE_PATH_BAR                 (nemo_path_bar_get_type ())
 #define NEMO_PATH_BAR(obj)                 (G_TYPE_CHECK_INSTANCE_CAST ((obj), NEMO_TYPE_PATH_BAR, NemoPathBar))
@@ -38,8 +37,6 @@ typedef struct _NemoPathBarDetails NemoPathBarDetails;
 struct _NemoPathBar
 {
 	GtkContainer parent;
-	
-	NemoPathBarDetails *priv;
 
 	void* cppParent;
 };

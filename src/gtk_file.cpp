@@ -25,6 +25,11 @@ namespace gtk
         return g_file_equal(file, otherFile.getPtr());
     }
 
+    bool File::operator!=(File otherFile)
+    {
+        return !g_file_equal(file, otherFile.getPtr());
+    }
+
     GFile* File::getPtr()
     {
         return file;
@@ -32,7 +37,8 @@ namespace gtk
 
     File::~File()
     {
-        g_object_unref(&file);
+        if(G_IS_OBJECT(file))
+            g_object_unref(&file);
     }
 
     File::File(GFile* original, bool callAddReference)

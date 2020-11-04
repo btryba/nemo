@@ -34,8 +34,8 @@ namespace gtk
         void get_preferred_height(int& minimumHeight, int& naturalHeight);
         void set_sensitive(bool toSet);
         bool has_focus();
-        void get_allocation(GtkAllocation* allocation);
-        void size_allocate(GtkAllocation* allocation);
+        void get_allocation(GtkAllocation& allocation);
+        void size_allocate(GtkAllocation& allocation);
         bool get_child_visible();
         void set_child_visible(bool toSet);
         void setPtr(void* pointer);
@@ -49,6 +49,8 @@ namespace gtk
         PangoLayout* create_pango_layout(const char* name);
         void drag_source_set(GdkModifierType startButtonMask,const GtkTargetEntry *targets, int n_targets, GdkDragAction actions);
         Settings getSettings();
+        void queue_resize();
+        GtkTextDirection get_direction();
     };
 }
 
