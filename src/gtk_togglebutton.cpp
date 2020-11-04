@@ -3,7 +3,7 @@
 namespace gtk
 {
     ToggleButton::ToggleButton(const char *name, GtkActionGroup* actionGroup)
-        : Button((GtkButton*)gtk_toggle_button_new(), false){}
+        : Button((GtkButton*)gtk_toggle_button_new(), false)
     {
         GtkWidget *image;
         GtkAction *action;
