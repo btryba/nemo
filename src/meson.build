@@ -67,6 +67,7 @@ nemoCommon_sources = [
   'nemo-navigation-state.c',
   'nemo-notebook.c',
   'nemo-pathbar.cpp',
+  'nemo-pathbar-button.cpp',
   'nemo-places-sidebar.c',
   'nemo-plugin-manager.c',
   'nemo-previewer.c',
