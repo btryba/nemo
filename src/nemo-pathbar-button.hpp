@@ -8,6 +8,8 @@ extern "C"
 }
 
 #include "gtk_togglebutton.hpp"
+#include "gtk_image.hpp"
+#include "gtk_label.hpp"
 
 namespace nemo
 {
@@ -34,8 +36,8 @@ namespace nemo
         /* flag to indicate its the base folder in the URI */
         bool is_base_dir;
 
-        GtkWidget *image;
-        GtkWidget *label;
+        gtk::Image image;
+        gtk::Label *label;
         GtkWidget *alignment;
         unsigned int ignore_changes : 1;
         unsigned int fake_root : 1;

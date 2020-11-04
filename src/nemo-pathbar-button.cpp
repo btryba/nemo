@@ -25,6 +25,8 @@ extern "C"
 #include "nemo-window-slot-dnd.h"
 }
 
+#include "gtk_box.hpp"
+
 namespace nemo
 {
     PathBarButton::PathBarButton(NemoFile *nemoFile, bool current_dir, bool base_dir, bool desktop_is_home)
@@ -32,7 +34,7 @@ namespace nemo
         dir_name{nemo_file_get_display_name (nemoFile)},
         file{nemo_file_ref (nemoFile)},
         mount_icon_name{nullptr},
-        image{gtk_image_new()},
+        image{},
         ignore_changes{false},
         fake_root{false},
         xdg_documents_path{get_xdg_dir (G_USER_DIRECTORY_DOCUMENTS)},
@@ -46,7 +48,7 @@ namespace nemo
         char *uri;
 
         GFile *tempPath = nemo_file_get_location (nemoFile);
-        GtkWidget *child = nullptr;
+        gtk::Box* box = new gtk::Box{GTK_ORIENTATION_HORIZONTAL, 2};
 
         setup_button_type(tempPath, desktop_is_home);
         
@@ -58,36 +60,35 @@ namespace nemo
         switch (type)
         {
             case ButtonType::Root:
-                child = image;
-                label = NULL;
+                label = nullptr;
+                add(image);
                 break;
             case ButtonType::Home:
             case ButtonType::Desktop:
             case ButtonType::Mount:
             case ButtonType::DefaultLocation:
-                label = gtk_label_new (nullptr);
-                child = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 2);
-                gtk_box_pack_start (GTK_BOX (child), image, false, false, 0);
-                gtk_box_pack_start (GTK_BOX (child), label, false, false, 0);
+                label = new gtk::Label(nullptr);
+                label->set_ellipsize(PANGO_ELLIPSIZE_MIDDLE);
+                box->pack_start(image, false, false);
+                box->pack_start(*label, false, false);
+                add(*box);
+                takeOnOwnership(box);
                 break;
             case ButtonType::Xdg:
             case ButtonType::Normal:
             default:
-                label = gtk_label_new (nullptr);
-                child = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 2);
-                gtk_box_pack_start (GTK_BOX (child), image, false, false, 0);
-                gtk_box_pack_start (GTK_BOX (child), label, false, false, 0);
+                label = new gtk::Label(nullptr);
+                label->set_ellipsize(PANGO_ELLIPSIZE_MIDDLE);
+                box->pack_start(image, false, false);
+                box->pack_start(*label, false, false);
+                add(*box);
+                takeOnOwnership(box);
                 is_base_dir = base_dir;
         }
-
-        if(label != nullptr)
-            gtk_label_set_ellipsize (GTK_LABEL (label), PANGO_ELLIPSIZE_MIDDLE);
 
         path = (GFile*)g_object_ref (tempPath);
 
         nemo_file_monitor_add (file, this, NEMO_FILE_ATTRIBUTES_FOR_ICON);
-
-        gtk_container_add (GTK_CONTAINER (getPtr()), child);
         show_all();
 
         update_button_state(current_dir);
@@ -132,65 +133,62 @@ namespace nemo
         if (label != nullptr)
         {
             const char *dir_name = get_dir_name();
-            if (gtk_label_get_use_markup (GTK_LABEL (label)))
+            if (label->get_use_markup())
             {
                 char *markup = g_markup_printf_escaped ("<b>%s</b>", dir_name);
-                gtk_label_set_markup (GTK_LABEL (label), markup);
-                gtk_widget_set_margin_right (GTK_WIDGET (label), 0);
-                gtk_widget_set_margin_left (GTK_WIDGET (label), 0);
+                label->set_markup(markup);
+                label->set_margin_left(0);
+                label->set_margin_right(0);
 
                 g_free(markup);
             } 
             else
             {
-                gtk_label_set_text (GTK_LABEL (label), dir_name);
+                label->set_text(dir_name);
                 set_label_padding_size();
             }
         }
 
         char *icon_name = nullptr;
 
-        if (image != nullptr)
+        switch (type) 
         {
-            switch (type) 
-            {
-                case ButtonType::Root:
-                    icon_name = g_strdup (NEMO_ICON_SYMBOLIC_FILESYSTEM);
-                    break;
-                case ButtonType::Home:
-                case ButtonType::Desktop:
-                case ButtonType::Xdg:
+            case ButtonType::Root:
+                icon_name = g_strdup (NEMO_ICON_SYMBOLIC_FILESYSTEM);
+                break;
+            case ButtonType::Home:
+            case ButtonType::Desktop:
+            case ButtonType::Xdg:
+                icon_name = nemo_file_get_control_icon_name (file);
+                break;
+            case ButtonType::Normal:
+                if (is_base_dir) 
+                {
                     icon_name = nemo_file_get_control_icon_name (file);
                     break;
-                case ButtonType::Normal:
-                    if (is_base_dir) 
-                    {
-                        icon_name = nemo_file_get_control_icon_name (file);
-                        break;
-                    }
-                case ButtonType::DefaultLocation:
-                case ButtonType::Mount:
-                    if (mount_icon_name) 
-                    {
-                        icon_name = g_strdup (mount_icon_name);
-                        break;
-                    }
-                default:
-                    icon_name = nullptr;
-            }
-
-            gtk_image_set_from_icon_name (GTK_IMAGE (image), icon_name, GTK_ICON_SIZE_MENU);
-
-            g_free (icon_name);
+                }
+            case ButtonType::DefaultLocation:
+            case ButtonType::Mount:
+                if (mount_icon_name) 
+                {
+                    icon_name = g_strdup (mount_icon_name);
+                    break;
+                }
+            default:
+                icon_name = nullptr;
         }
 
+        image.set_from_icon_name(icon_name, GTK_ICON_SIZE_MENU);
+
+        g_free (icon_name);
     }
 
    void PathBarButton::update_button_state(bool current_dir)
     {
-        if (label != nullptr) {
-            gtk_label_set_label (GTK_LABEL (label), NULL);
-            gtk_label_set_use_markup (GTK_LABEL (label), current_dir);
+        if (label != nullptr)
+        {
+            label->set_label(nullptr);
+            label->set_use_markup(current_dir);
         }
 
         update_button_appearance ();
@@ -240,7 +238,7 @@ namespace nemo
     {
         const char *dir_name = get_dir_name();
        
-        PangoLayout *layout = gtk_widget_create_pango_layout (label, dir_name);
+        PangoLayout *layout = label->create_pango_layout(dir_name);
         int width, height;
         pango_layout_get_pixel_size (layout, &width, &height);
 
@@ -251,8 +249,8 @@ namespace nemo
         int bold_width, bold_height;
         pango_layout_get_pixel_size (layout, &bold_width, &bold_height);
 
-        gtk_widget_set_margin_left (GTK_WIDGET (label), (bold_width - width) / 2);
-        gtk_widget_set_margin_right (GTK_WIDGET (label), (bold_width - width) / 2);
+        label->set_margin_left((bold_width - width) / 2);
+        label->set_margin_right((bold_width - width) / 2);
 
         g_object_unref (layout);
     }
