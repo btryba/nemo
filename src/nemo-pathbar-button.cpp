@@ -28,11 +28,13 @@ extern "C"
 namespace nemo
 {
     PathBarButton::PathBarButton(NemoFile *nemoFile, bool current_dir, bool base_dir, bool desktop_is_home)
-        : button{gtk_toggle_button_new ()},
+        : gtk::ToggleButton(),
         dir_name{nemo_file_get_display_name (nemoFile)},
         file{nemo_file_ref (nemoFile)},
         mount_icon_name{nullptr},
         image{gtk_image_new()},
+        ignore_changes{false},
+        fake_root{false},
         xdg_documents_path{get_xdg_dir (G_USER_DIRECTORY_DOCUMENTS)},
         xdg_download_path{get_xdg_dir (G_USER_DIRECTORY_DOWNLOAD)},
         xdg_music_path{get_xdg_dir (G_USER_DIRECTORY_MUSIC)},
@@ -48,9 +50,9 @@ namespace nemo
 
         setup_button_type(tempPath, desktop_is_home);
         
-        gtk_style_context_add_class (gtk_widget_get_style_context (button), "text-button");
-        gtk_button_set_focus_on_click (GTK_BUTTON (button), FALSE);
-        gtk_widget_add_events (button, GDK_SCROLL_MASK);
+        get_style_context()->add_class("text-button");
+        set_focus_on_click(false);
+        add_events(GDK_SCROLL_MASK);
         /* TODO update button type when xdg directories change */
 
         switch (type)
@@ -85,8 +87,8 @@ namespace nemo
 
         nemo_file_monitor_add (file, this, NEMO_FILE_ATTRIBUTES_FOR_ICON);
 
-        gtk_container_add (GTK_CONTAINER (button), child);
-        gtk_widget_show_all (button);
+        gtk_container_add (GTK_CONTAINER (getPtr()), child);
+        show_all();
 
         update_button_state(current_dir);
 
@@ -97,7 +99,7 @@ namespace nemo
 
         g_clear_pointer (&uri, g_free);
 
-        nemo_drag_slot_proxy_init (button, file, nullptr);
+        nemo_drag_slot_proxy_init(getPtr(), file, nullptr);
 
         g_object_unref (tempPath);
     }
@@ -193,10 +195,10 @@ namespace nemo
 
         update_button_appearance ();
 
-        if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (button)) != current_dir)
+        if (get_active() != current_dir)
         {
             ignore_changes = true;
-            gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), current_dir);
+            set_active(current_dir);
             ignore_changes = false;
         }
     }
@@ -262,8 +264,7 @@ namespace nemo
             { (char *)NEMO_ICON_DND_GNOME_ICON_LIST_TYPE, 0, NEMO_ICON_DND_GNOME_ICON_LIST }
         };
 
-            gtk_drag_source_set (button,
-                        (GdkModifierType)(GDK_BUTTON1_MASK |
+            drag_source_set((GdkModifierType)(GDK_BUTTON1_MASK |
                     GDK_BUTTON2_MASK),
                         NULL, 0,
                     (GdkDragAction)(GDK_ACTION_MOVE |
@@ -273,10 +274,10 @@ namespace nemo
 
         target_list = gtk_target_list_new (targets, G_N_ELEMENTS (targets));
         gtk_target_list_add_uri_targets (target_list, NEMO_ICON_DND_URI_LIST);
-        gtk_drag_source_set_target_list (button, target_list);
+        gtk_drag_source_set_target_list (getPtr(), target_list);
         gtk_target_list_unref (target_list);
 
-        g_signal_connect (button, "drag-data-get",
+        g_signal_connect (getPtr(), "drag-data-get",
                     G_CALLBACK (PathBarButton::button_drag_data_get_cb),
                     this);
     }

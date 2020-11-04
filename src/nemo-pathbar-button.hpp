@@ -7,6 +7,8 @@ extern "C"
     #include <gtk/gtk.h>
 }
 
+#include "gtk_togglebutton.hpp"
+
 namespace nemo
 {
     enum class ButtonType
@@ -20,9 +22,8 @@ namespace nemo
         DefaultLocation,
     };
 
-    struct PathBarButton
+    struct PathBarButton : gtk::ToggleButton
     {
-        GtkWidget *button;
         ButtonType type;
         char *dir_name;
         GFile *path;
