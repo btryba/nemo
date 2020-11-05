@@ -1,5 +1,6 @@
 #include "gtk_widget.hpp"
 #include "gtk_settings.hpp"
+#include "gtk_widgetpath.hpp"
 
 namespace gtk
 {
@@ -193,5 +194,11 @@ namespace gtk
      GtkTextDirection Widget::get_direction()
      {
          return gtk_widget_get_direction(widget);
+     }
+
+     WidgetPath* Widget::get_path()
+     {
+        GtkWidgetPath* path = gtk_widget_get_path(widget);
+        return new WidgetPath{path, false};
      }
 }

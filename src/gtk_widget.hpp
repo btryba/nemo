@@ -7,6 +7,7 @@
 namespace gtk
 {
     struct Settings;
+    struct WidgetPath;
     class Widget
     {
         protected:
@@ -51,6 +52,7 @@ namespace gtk
         Settings getSettings();
         void queue_resize();
         GtkTextDirection get_direction();
+        WidgetPath* get_path();
     };
 }
 
