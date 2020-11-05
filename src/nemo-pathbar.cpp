@@ -20,42 +20,32 @@
 
 extern "C"
 {
-#include <config.h>
-#include <string.h>
 #include <gtk/gtk.h>
 #include <glib/gi18n.h>
 #include <gio/gio.h>
-#include <math.h>
 
 #include "nemo-pathbar.h"
-
-#include <eel/eel-vfs-extensions.h>
 
 #include <libnemo-private/nemo-file.h>
 #include <libnemo-private/nemo-file-utilities.h>
 #include <libnemo-private/nemo-global-preferences.h>
 #include <libnemo-private/nemo-icon-names.h>
 #include <libnemo-private/nemo-icon-dnd.h>
-
-#include "nemo-window.h"
-#include "nemo-window-private.h"
-#include "nemo-window-slot.h"
-#include "nemo-window-slot-dnd.h"
 }
 
 #include "gtk_image.hpp"
 #include <cstdint>
 #include "nemo-pathbar-button.hpp"
 #include "nemo-pathbar.hpp"
+#include "gtk_widgetpath.hpp"
 
 static void desktop_location_changed_callback (gpointer user_data);
 static gboolean nemo_path_bar_slider_button_press(GtkWidget *widget, GdkEventButton  *event, NemoPathBar *path_bar);
 static gboolean nemo_path_bar_slider_button_release (GtkWidget       *widget, GdkEventButton  *event, NemoPathBar *path_bar);
-static void nemo_path_bar_stop_scrolling(NemoPathBar *path_bar);
 static void nemo_path_bar_slider_drag_motion(GtkWidget *widget, GdkDragContext *context, int x, int y, unsigned int time, gpointer user_data);
 static void nemo_path_bar_slider_drag_leave(GtkWidget *widget, GdkDragContext *context, unsigned int time, gpointer user_data);
 static nemo::PathBarButton * make_directory_button (NemoPathBar *path_bar, NemoFile *file,  gboolean current_dir, gboolean base_dir);
-static void child_ordering_changed (NemoPathBar *path_bar);
+static gboolean nemo_path_bar_check_parent_path(NemoPathBar *path_bar, GFile *location, nemo::PathBarButton **current_button_data);
 
 enum {
     PATH_CLICKED,
@@ -117,7 +107,7 @@ namespace nemo
         delete up_slider_button;
 	    delete down_slider_button;
 
-        nemo_path_bar_stop_scrolling((NemoPathBar*)widget);
+        stop_scrolling();
 
         if (drag_slider_timeout != 0)
         {
@@ -210,7 +200,7 @@ namespace nemo
         /* We find the button at the 'down' end, the non visible subfolder of
         * a visible folder, that we have to make visible */
         for (GList *list = button_list; list; list = list->next)
-            if (list->next && buttonFromList(list->next).get_child_visible())
+            if (list->next && buttonFromList(*list->next).get_child_visible())
             {
                 down_button = list;
                 break;
@@ -225,13 +215,13 @@ namespace nemo
 
         /* Find the last visible button on the 'up' end */
         for (GList *list = g_list_last (button_list); list; list = list->prev)
-            if (buttonFromList(list).get_child_visible())
+            if (buttonFromList(*list).get_child_visible())
             {
                 up_button = list;
                 break;
             }
 
-        buttonFromList(down_button).get_allocation(down_button_allocation);
+        buttonFromList(*down_button).get_allocation(down_button_allocation);
         get_allocation(allocation);
         down_slider_button->get_allocation(slider_allocation);
 
@@ -247,7 +237,7 @@ namespace nemo
         * need */
         while ((space_available < space_needed) && (up_button != down_button))
         {
-            buttonFromList(up_button).get_allocation(up_button_allocation);
+            buttonFromList(*up_button).get_allocation(up_button_allocation);
             space_available += up_button_allocation.width;
             up_button = up_button->prev;
             scrolled_root_button = up_button;
@@ -261,7 +251,7 @@ namespace nemo
 
         for (list = button_list; list; list = list->next)
         {
-            PathBarButton& button_data = buttonFromList(list);
+            PathBarButton& button_data = buttonFromList(*list);
             if (button_data.get_active())
             {
                 path = (GFile*)g_object_ref (button_data.path);
@@ -270,22 +260,20 @@ namespace nemo
         }
         if (path != nullptr)
         {
-            update_path(path, true);
+            update_path(*path, true);
             g_object_unref (path);
         }
     }
     
-    bool PathBar::update_path(GFile *file_path, bool emit_signal)
+    bool PathBar::update_path(GFile& file_path, bool emit_signal)
     {
-        g_return_val_if_fail (file_path != NULL, FALSE);
-
         GList *fake_root = nullptr;
         bool result = true;
         bool first_directory = true;
         GList *new_buttons = nullptr;
         PathBarButton *current_button_data = nullptr;
 
-        NemoFile *file = nemo_file_get (file_path);
+        NemoFile *file = nemo_file_get (&file_path);
 
         gtk_widget_push_composite_child ();
 
@@ -313,25 +301,102 @@ namespace nemo
         this->fake_root = fake_root;
 
         for (GList* l = button_list; l; l = l->next)
-            add(buttonFromList(l));
+            add(buttonFromList(*l));
 
         gtk_widget_pop_composite_child ();
 
-        child_ordering_changed((NemoPathBar*)widget);
+        child_ordering_changed();
 
-        if (current_path != NULL) {
+        if (current_path != nullptr)
             g_object_unref(current_path);
-        }
 
-        current_path = (GFile*)g_object_ref (file_path);
+        current_path = (GFile*)g_object_ref (&file_path);
         this->current_button_data = current_button_data;
 
-        g_signal_emit (widget, path_bar_signals [PATH_SET], 0, file_path);
+        g_signal_emit (widget, path_bar_signals [PATH_SET], 0, &file_path);
 
         return result;
     }
     
+    /* Size requisition:
+    *
+    * Ideally, our size is determined by another widget, and we are just filling
+    * available space.
+    */
+    void PathBar::get_preferred_width(int& minimum, int& natural)
+    {
+        if(down_slider_button == nullptr)
+            return;
+
+        minimum = natural = 0;
+
+        for (GList *list = button_list; list; list = list->next)
+        {
+            int child_min, child_nat;
+            buttonFromList(*list).get_preferred_width(child_min, child_nat);
+            minimum = MAX (minimum, child_min);
+            natural = MAX (natural, child_nat);
+        }
+
+        down_slider_button->get_preferred_width(slider_width);
+
+        minimum += slider_width * 2;
+        natural += slider_width * 2;
+    }
     
+    bool PathBar::set_path(GFile &file_path)
+    {
+        PathBarButton *button_data;
+
+        /* Check whether the new path is already present in the pathbar as buttons.
+        * This could be a parent directory or a previous selected subdirectory. */
+        if (nemo_path_bar_check_parent_path ((NemoPathBar*)widget, &file_path, &button_data))
+        {
+            if (current_path != nullptr)
+                g_object_unref (current_path);
+
+            current_path = (GFile*)g_object_ref (&file_path);
+            current_button_data = button_data;
+
+            return TRUE;
+        }
+
+        return update_path(file_path, true);
+    }
+    
+    void PathBar::stop_scrolling()
+    {
+        if (timer)
+        {
+            g_source_remove (timer);
+            timer = 0;
+            need_timer = false;
+        }
+    }
+    
+    void PathBar::child_ordering_changed()
+    {
+        if (!up_slider_button->isNull())
+            up_slider_button->get_style_context()->invalidate();
+
+        if (!down_slider_button->isNull())
+            down_slider_button->get_style_context()->invalidate();
+
+        for (GList *l = button_list; l; l = l->next)
+            buttonFromList(*l).get_style_context()->invalidate();
+    }
+
+    void PathBar::clear_buttons()
+    {
+        while (button_list != NULL)
+        {
+            nemo::PathBarButton* button = (nemo::PathBarButton*) (button_list->data);
+            remove(*button);
+            delete button;
+        }
+        scrolled_root_button = nullptr;
+        fake_root = nullptr;
+    }
     
     void PathBar::scroll_up_static(PathBar* bar)
     {
@@ -343,18 +408,19 @@ namespace nemo
         bar->scroll_down();
     }
 
-    PathBarButton& PathBar::buttonFromList(GList* list)
+    void PathBar::get_preferred_width_static(GtkWidget* widget, int* minimum, int* natural)
     {
-        return *((PathBarButton*)list->data);
+        ((PathBar*)widget)->get_preferred_width(*minimum, *natural);
+    }
+    
+    PathBarButton& PathBar::buttonFromList(GList& list)
+    {
+        return *((PathBarButton*)list.data);
     }
 }
 
-
-
 static const int SCROLL_TIMEOUT = 150;
 static const int INITIAL_SCROLL_TIMEOUT = 300;
-
-
 
 static const int NEMO_PATH_BAR_ICON_SIZE = 16;
 static const int NEMO_PATH_BAR_BUTTON_MAX_WIDTH = 250;
@@ -376,6 +442,84 @@ static void     nemo_path_bar_check_icon_theme         (NemoPathBar *path_bar);
 static nemo::PathBar& getCppObject(void* obj)
 {
     return *((nemo::PathBar*)((NemoPathBar*)obj)->cppParent);
+}
+
+static GtkWidgetPath * nemo_path_bar_get_path_for_child (GtkContainer *container, GtkWidget *child)
+{
+    NemoPathBar *path_bar = NEMO_PATH_BAR (container);
+    GtkWidgetPath *path;
+
+    path = gtk_widget_path_copy (gtk_widget_get_path (GTK_WIDGET (path_bar)));
+
+    if (gtk_widget_get_visible (child) && gtk_widget_get_child_visible (child)) {
+        GtkWidgetPath *sibling_path;
+        GList *visible_children;
+        GList *l;
+        int pos;
+
+        /* 1. Build the list of visible children, in visually left-to-right order
+         * (i.e. independently of the widget's direction).  Note that our
+         * button_list is stored in innermost-to-outermost path order!
+         */
+
+        visible_children = NULL;
+
+        if (getCppObject(path_bar).down_slider_button->get_visible() &&
+            getCppObject(path_bar).down_slider_button->get_child_visible()) 
+        {
+            visible_children = g_list_prepend (visible_children, getCppObject(path_bar).down_slider_button->getPtr());
+        }
+
+        for (l = getCppObject(path_bar).button_list; l; l = l->next)
+        {
+            nemo::PathBarButton *data = (nemo::PathBarButton*)l->data;
+
+            if (data->get_visible() && data->get_child_visible())
+                visible_children = g_list_prepend (visible_children, data->getPtr());
+        }
+
+        if (getCppObject(path_bar).up_slider_button->get_visible() &&
+            getCppObject(path_bar).up_slider_button->get_child_visible())
+        {
+            visible_children = g_list_prepend (visible_children, getCppObject(path_bar).up_slider_button->getPtr());
+        }
+
+        if (gtk_widget_get_direction (GTK_WIDGET (path_bar)) == GTK_TEXT_DIR_RTL) {
+            visible_children = g_list_reverse (visible_children);
+        }
+
+        /* 2. Find the index of the child within that list */
+
+        pos = 0;
+
+        for (l = visible_children; l; l = l->next) {
+            GtkWidget *button = (GtkWidget*)l->data;
+
+            if (button == child) {
+                break;
+            }
+
+            pos++;
+        }
+
+        /* 3. Build the path */
+
+        sibling_path = gtk_widget_path_new ();
+
+        for (l = visible_children; l; l = l->next) {
+            gtk_widget_path_append_for_widget (sibling_path, (GtkWidget*)l->data);
+        }
+
+        gtk_widget_path_append_with_siblings (path, sibling_path, pos);
+
+        g_list_free (visible_children);
+        gtk_widget_path_unref (sibling_path);
+    } 
+    else
+        gtk_widget_path_append_for_widget (path, child);
+
+
+    return path;
 }
 
 static void desktop_location_changed_callback (gpointer user_data)
@@ -454,8 +598,7 @@ static void nemo_path_bar_init (NemoPathBar *path_bar)
     path_bar->cppParent = cppClass;
 }
 
-static void
-nemo_path_bar_finalize (GObject *object)
+static void nemo_path_bar_finalize (GObject *object)
 {
     NemoPathBar *path_bar = NEMO_PATH_BAR (object);
     delete &getCppObject(path_bar);
@@ -463,10 +606,14 @@ nemo_path_bar_finalize (GObject *object)
     G_OBJECT_CLASS (nemo_path_bar_parent_class)->finalize (object);
 }
 
+GtkWidget* nemo_path_bar_new()
+{
+    NemoPathBar* cClass = (NemoPathBar*)g_object_new (NEMO_TYPE_PATH_BAR, nullptr); //calls init
+    return (GtkWidget*)cClass;
+}
+
 /* Removes the settings signal handler.  It's safe to call multiple times */
-static void
-remove_settings_signal (NemoPathBar *path_bar,
-            GdkScreen  *screen)
+static void remove_settings_signal (NemoPathBar *path_bar, GdkScreen  *screen)
 {
     if (getCppObject(path_bar).settings_signal_id) {
           GtkSettings *settings;
@@ -478,50 +625,11 @@ remove_settings_signal (NemoPathBar *path_bar,
     }
 }
 
-static void
-nemo_path_bar_dispose (GObject *object)
+static void nemo_path_bar_dispose (GObject *object)
 {
     remove_settings_signal (NEMO_PATH_BAR (object), gtk_widget_get_screen (GTK_WIDGET (object)));
 
     G_OBJECT_CLASS (nemo_path_bar_parent_class)->dispose (object);
-}
-
-/* Size requisition:
- *
- * Ideally, our size is determined by another widget, and we are just filling
- * available space.
- */
-static void
-nemo_path_bar_get_preferred_width (GtkWidget *widget,
-                       gint      *minimum,
-                       gint      *natural)
-{
-    nemo::PathBarButton *button_data;
-    NemoPathBar *path_bar;
-    GList *list;
-    int child_min, child_nat;
-
-    path_bar = NEMO_PATH_BAR (widget);
-
-    *minimum = *natural = 0;
-
-    for (list = getCppObject(path_bar).button_list; list; list = list->next) {
-        button_data = (nemo::PathBarButton*) (list->data);
-        button_data->get_preferred_width(child_min, child_nat);
-        *minimum = MAX (*minimum, child_min);
-        *natural = MAX (*natural, child_nat);
-    }
-
-    getCppObject(path_bar).down_slider_button->get_preferred_width(getCppObject(path_bar).slider_width);
-
-    *minimum += getCppObject(path_bar).slider_width * 2;
-    *natural += getCppObject(path_bar).slider_width * 2;
-}
-
-GtkWidget* nemo_path_bar_new()
-{
-    NemoPathBar* cClass = (NemoPathBar*)g_object_new (NEMO_TYPE_PATH_BAR, nullptr); //calls init
-    return (GtkWidget*)cClass;
 }
 
 static void button_data_file_changed (NemoFile *file,
@@ -581,7 +689,7 @@ static void button_data_file_changed (NemoFile *file,
                 current_location = nemo_file_get_location (current_button_data->file);
             }
 
-                getCppObject(path_bar).update_path(location, false);
+                getCppObject(path_bar).update_path(*location, false);
                 nemo_path_bar_set_path (path_bar, current_location);
             g_object_unref (location);
             g_object_unref (current_location);
@@ -658,7 +766,7 @@ static void nemo_path_bar_update_slider_buttons(NemoPathBar *path_bar)
         if (gtk_widget_get_child_visible (button))
         {
             getCppObject(path_bar).down_slider_button->set_sensitive(false);
-            nemo_path_bar_stop_scrolling (path_bar);
+            getCppObject(path_bar).stop_scrolling();
         } 
         else
             getCppObject(path_bar).down_slider_button->set_sensitive(true);
@@ -667,7 +775,7 @@ static void nemo_path_bar_update_slider_buttons(NemoPathBar *path_bar)
         if (gtk_widget_get_child_visible (button))
         {
             getCppObject(path_bar).up_slider_button->set_sensitive(false);
-            nemo_path_bar_stop_scrolling (path_bar);
+            getCppObject(path_bar).stop_scrolling();
         }
         else
             getCppObject(path_bar).up_slider_button->set_sensitive(true);
@@ -676,7 +784,7 @@ static void nemo_path_bar_update_slider_buttons(NemoPathBar *path_bar)
 
 static void nemo_path_bar_unmap (GtkWidget *widget)
 {
-    nemo_path_bar_stop_scrolling (NEMO_PATH_BAR (widget));
+    getCppObject(widget).stop_scrolling();
     gdk_window_hide (getCppObject(widget).event_window);
 
     GTK_WIDGET_CLASS (nemo_path_bar_parent_class)->unmap (widget);
@@ -687,24 +795,7 @@ static void nemo_path_bar_map (GtkWidget *widget)
     gdk_window_show (getCppObject(widget).event_window);
 
     GTK_WIDGET_CLASS (nemo_path_bar_parent_class)->map (widget);
-}
-
-static void child_ordering_changed (NemoPathBar *path_bar)
-{
-    GList *l;
-
-    if (getCppObject(path_bar).up_slider_button->getPtr())
-        getCppObject(path_bar).up_slider_button->get_style_context()->invalidate();
-
-    if (getCppObject(path_bar).down_slider_button->getPtr())
-        getCppObject(path_bar).down_slider_button->get_style_context()->invalidate();
-
-
-    for (l = getCppObject(path_bar).button_list; l; l = l->next) {
-        nemo::PathBarButton *data = (nemo::PathBarButton*)l->data;
-        gtk_style_context_invalidate (gtk_widget_get_style_context (data->getPtr()));
-    }
-}
+} 
 
 /* This is a tad complicated */
 static void nemo_path_bar_size_allocate (GtkWidget *widget, GtkAllocation *allocation)
@@ -974,9 +1065,8 @@ static void nemo_path_bar_size_allocate (GtkWidget *widget, GtkAllocation *alloc
         getCppObject(path_bar).scrolled_root_button = NULL;
     }
 
-    if (needs_reorder) {
-        child_ordering_changed (path_bar);
-    }
+    if (needs_reorder)
+        getCppObject(path_bar).child_ordering_changed();
 }
 
 static void nemo_path_bar_style_updated (GtkWidget *widget)
@@ -1145,90 +1235,13 @@ static void nemo_path_bar_forall (GtkContainer *container,
 static void nemo_path_bar_grab_notify (GtkWidget *widget, gboolean was_grabbed)
 {
     if (!was_grabbed)
-        nemo_path_bar_stop_scrolling (NEMO_PATH_BAR (widget));
+        getCppObject(widget).stop_scrolling();
 }
 
 static void nemo_path_bar_state_changed (GtkWidget *widget, GtkStateType previous_state)
 {
     if (!gtk_widget_get_sensitive (widget))
-        nemo_path_bar_stop_scrolling (NEMO_PATH_BAR (widget));
-}
-
-static GtkWidgetPath *
-nemo_path_bar_get_path_for_child (GtkContainer *container,
-                    GtkWidget *child)
-{
-    NemoPathBar *path_bar = NEMO_PATH_BAR (container);
-    GtkWidgetPath *path;
-
-    path = gtk_widget_path_copy (gtk_widget_get_path (GTK_WIDGET (path_bar)));
-
-    if (gtk_widget_get_visible (child) && gtk_widget_get_child_visible (child)) {
-        GtkWidgetPath *sibling_path;
-        GList *visible_children;
-        GList *l;
-        int pos;
-
-        /* 1. Build the list of visible children, in visually left-to-right order
-         * (i.e. independently of the widget's direction).  Note that our
-         * button_list is stored in innermost-to-outermost path order!
-         */
-
-        visible_children = NULL;
-
-        if (getCppObject(path_bar).down_slider_button->get_visible() &&
-            getCppObject(path_bar).down_slider_button->get_child_visible()) {
-            visible_children = g_list_prepend (visible_children, getCppObject(path_bar).down_slider_button->getPtr());
-        }
-
-        for (l = getCppObject(path_bar).button_list; l; l = l->next) {
-            nemo::PathBarButton *data = (nemo::PathBarButton*)l->data;
-
-            if (gtk_widget_get_visible (data->getPtr()) &&
-                gtk_widget_get_child_visible (data->getPtr()))
-                visible_children = g_list_prepend (visible_children, data->getPtr());
-        }
-
-        if (getCppObject(path_bar).up_slider_button->get_visible() &&
-            getCppObject(path_bar).up_slider_button->get_child_visible()) {
-            visible_children = g_list_prepend (visible_children, getCppObject(path_bar).up_slider_button->getPtr());
-        }
-
-        if (gtk_widget_get_direction (GTK_WIDGET (path_bar)) == GTK_TEXT_DIR_RTL) {
-            visible_children = g_list_reverse (visible_children);
-        }
-
-        /* 2. Find the index of the child within that list */
-
-        pos = 0;
-
-        for (l = visible_children; l; l = l->next) {
-            GtkWidget *button = (GtkWidget*)l->data;
-
-            if (button == child) {
-                break;
-            }
-
-            pos++;
-        }
-
-        /* 3. Build the path */
-
-        sibling_path = gtk_widget_path_new ();
-
-        for (l = visible_children; l; l = l->next) {
-            gtk_widget_path_append_for_widget (sibling_path, (GtkWidget*)l->data);
-        }
-
-        gtk_widget_path_append_with_siblings (path, sibling_path, pos);
-
-        g_list_free (visible_children);
-        gtk_widget_path_unref (sibling_path);
-    } else {
-        gtk_widget_path_append_for_widget (path, child);
-    }
-
-    return path;
+        getCppObject(widget).stop_scrolling();
 }
 
 static void nemo_path_bar_class_init(NemoPathBarClass *path_bar_class)
@@ -1245,7 +1258,7 @@ static void nemo_path_bar_class_init(NemoPathBarClass *path_bar_class)
     gobject_class->dispose = nemo_path_bar_dispose;
 
     widget_class->get_preferred_height = nemo_path_bar_get_preferred_height;
-    widget_class->get_preferred_width = nemo_path_bar_get_preferred_width;
+    widget_class->get_preferred_width = nemo::PathBar::get_preferred_width_static;
     widget_class->realize = nemo_path_bar_realize;
     widget_class->unrealize = nemo_path_bar_unrealize;
     widget_class->unmap = nemo_path_bar_unmap;
@@ -1309,16 +1322,7 @@ static gboolean nemo_path_bar_scroll_timeout (NemoPathBar *path_bar)
     }
 
     return retval;
-}
-
-static void nemo_path_bar_stop_scrolling (NemoPathBar *path_bar)
-{
-    if (getCppObject(path_bar).timer) {
-        g_source_remove (getCppObject(path_bar).timer);
-        getCppObject(path_bar).timer = 0;
-        getCppObject(path_bar).need_timer = FALSE;
-    }
-}
+} 
 
 static gboolean nemo_path_bar_slider_button_press (GtkWidget       *widget,
                        GdkEventButton  *event,
@@ -1358,7 +1362,7 @@ static gboolean nemo_path_bar_slider_button_release (GtkWidget      *widget,
     }
 
     getCppObject(path_bar).ignore_click = TRUE;
-    nemo_path_bar_stop_scrolling (path_bar);
+    getCppObject(path_bar).stop_scrolling();
 
     return FALSE;
 }
@@ -1407,18 +1411,6 @@ static void nemo_path_bar_check_icon_theme (NemoPathBar *path_bar)
 }
 
 /* Public functions and their helpers */
-void nemo_path_bar_clear_buttons (NemoPathBar *path_bar)
-{
-    while (getCppObject(path_bar).button_list != NULL)
-    {
-        nemo::PathBarButton* button = (nemo::PathBarButton*) (getCppObject(path_bar).button_list->data);
-        gtk_container_remove (GTK_CONTAINER (path_bar), button->getPtr());
-        delete button;
-    }
-    getCppObject(path_bar).scrolled_root_button = NULL;
-    getCppObject(path_bar).fake_root = NULL;
-}
-
 static void button_clicked_cb (GtkWidget *button, gpointer data)
 {
     nemo::PathBarButton *button_data;
@@ -1454,10 +1446,7 @@ static nemo::PathBarButton * make_directory_button (NemoPathBar *path_bar, NemoF
      return button_data;
 }
 
-static gboolean
-nemo_path_bar_check_parent_path (NemoPathBar *path_bar,
-                     GFile *location,
-                     nemo::PathBarButton **current_button_data)
+static gboolean nemo_path_bar_check_parent_path(NemoPathBar *path_bar, GFile *location, nemo::PathBarButton **current_button_data)
 {
     GList *list;
     GList *current_path;
@@ -1517,33 +1506,12 @@ nemo_path_bar_check_parent_path (NemoPathBar *path_bar,
     return FALSE;
 }
 
-gboolean
-nemo_path_bar_set_path (NemoPathBar *path_bar, GFile *file_path)
+gboolean nemo_path_bar_set_path (NemoPathBar *path_bar, GFile *file_path)
 {
-    nemo::PathBarButton *button_data;
-
-    g_return_val_if_fail (NEMO_IS_PATH_BAR (path_bar), FALSE);
-    g_return_val_if_fail (file_path != NULL, FALSE);
-
-        /* Check whether the new path is already present in the pathbar as buttons.
-         * This could be a parent directory or a previous selected subdirectory. */
-    if (nemo_path_bar_check_parent_path (path_bar, file_path, &button_data)) {
-        if (getCppObject(path_bar).current_path != NULL) {
-            g_object_unref (getCppObject(path_bar).current_path);
-        }
-
-        getCppObject(path_bar).current_path = (GFile*)g_object_ref (file_path);
-        getCppObject(path_bar).current_button_data = button_data;
-
-        return TRUE;
-    }
-
-    return getCppObject(path_bar).update_path(file_path, true);
+    return getCppObject(path_bar).set_path(*file_path);
 }
 
-GFile *
-nemo_path_bar_get_path_for_button (NemoPathBar *path_bar,
-                       GtkWidget       *button)
+GFile *nemo_path_bar_get_path_for_button (NemoPathBar *path_bar, GtkWidget *button)
 {
     GList *list;
 
@@ -1561,3 +1529,7 @@ nemo_path_bar_get_path_for_button (NemoPathBar *path_bar,
     return NULL;
 }
 
+void nemo_path_bar_clear_buttons (NemoPathBar *path_bar)
+{
+    getCppObject(path_bar).clear_buttons();
+}

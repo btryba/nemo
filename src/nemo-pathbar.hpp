@@ -43,13 +43,19 @@ namespace nemo
         void scroll_up();
         void scroll_down();
         void update_button_types();
-        bool update_path(GFile *file_path, bool emit_signal);
+        bool update_path(GFile& file_path, bool emit_signal);
+        void get_preferred_width(int& minimum, int& natural);
+        bool set_path(GFile &file_path);
+        void stop_scrolling();
+        void child_ordering_changed();
+        void clear_buttons();
 
         static void scroll_up_static(PathBar* bar);
         static void scroll_down_static(PathBar* bar);
+        static void get_preferred_width_static(GtkWidget* widget, int* minimum, int* natural);
 
         private:
-        PathBarButton& buttonFromList(GList* list);
+        PathBarButton& buttonFromList(GList& list);
     };
 }
 

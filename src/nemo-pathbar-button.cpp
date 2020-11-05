@@ -2,26 +2,16 @@
 
 extern "C"
 {
-#include <config.h>
-#include <string.h>
 #include <gtk/gtk.h>
 #include <glib/gi18n.h>
 #include <gio/gio.h>
-#include <math.h>
-
-#include "nemo-pathbar.h"
 
 #include <eel/eel-vfs-extensions.h>
 
 #include <libnemo-private/nemo-file.h>
 #include <libnemo-private/nemo-file-utilities.h>
-#include <libnemo-private/nemo-global-preferences.h>
 #include <libnemo-private/nemo-icon-names.h>
-#include <libnemo-private/nemo-icon-dnd.h>
 
-#include "nemo-window.h"
-#include "nemo-window-private.h"
-#include "nemo-window-slot.h"
 #include "nemo-window-slot-dnd.h"
 }
 
