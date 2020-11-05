@@ -28,6 +28,7 @@ gtkWrapperSources = [
   'gtk_toolbar.cpp',
   'gtk_toolitem.cpp',
   'gtk_widget.cpp',
+  'gtk_widgetpath.cpp',
 ]
 
 nemoCommon_sources = [
