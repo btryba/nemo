@@ -33,11 +33,11 @@ extern "C"
 #include <libnemo-private/nemo-icon-dnd.h>
 }
 
-#include "gtk_image.hpp"
+#include <gtkpp/gtkpp-Image.hpp>
+#include <gtkpp/gtkpp-WidgetPath.hpp>
 #include <cstdint>
 #include "nemo-pathbar-button.hpp"
 #include "nemo-pathbar.hpp"
-#include "gtk_widgetpath.hpp"
 
 static void desktop_location_changed_callback (gpointer user_data);
 static gboolean nemo_path_bar_slider_button_press(GtkWidget *widget, GdkEventButton  *event, NemoPathBar *path_bar);
@@ -60,7 +60,7 @@ namespace nemo
     //Create spot in memory for static variables
     bool PathBar::desktop_is_home;
 
-    PathBar::PathBar(GtkContainer* cClass) : gtk::Container(cClass),
+    PathBar::PathBar(GtkContainer* cClass) : gtkpp::Container(cClass),
         event_window{nullptr},
         root_path{nullptr},
         home_path{nullptr},
@@ -123,20 +123,20 @@ namespace nemo
                             widget);
     }
 
-    gtk::Button* PathBar::get_slider_button(GtkPositionType position)
+    gtkpp::Button* PathBar::get_slider_button(GtkPositionType position)
     {
         gtk_widget_push_composite_child();
 
-        gtk::Button* button = new gtk::Button{};
+        gtkpp::Button* button = new gtkpp::Button{};
         button->get_style_context()->add_class("slider-button");
         button->set_focus_on_click(false);
         button->add_events(GDK_SCROLL_MASK);
         
-        gtk::Image* image;
+        gtkpp::Image* image;
         if (position == GTK_POS_LEFT)
-            image = new gtk::Image{"pan-start-symbolic", GTK_ICON_SIZE_MENU};
+            image = new gtkpp::Image{"pan-start-symbolic", GTK_ICON_SIZE_MENU};
         else
-            image = new gtk::Image{"pan-end-symbolic", GTK_ICON_SIZE_MENU};
+            image = new gtkpp::Image{"pan-end-symbolic", GTK_ICON_SIZE_MENU};
         button->takeOnOwnership(image);
         button->add(*image);
         add(*button);
@@ -144,12 +144,12 @@ namespace nemo
 
         gtk_widget_pop_composite_child();
 
-        button->connect(gtk::ButtonEventType::ButtonPressed, &nemo_path_bar_slider_button_press, widget);
-        button->connect(gtk::ButtonEventType::ButtonReleased, &nemo_path_bar_slider_button_release, widget);
+        button->connect(gtkpp::ButtonEventType::ButtonPressed, &nemo_path_bar_slider_button_press, widget);
+        button->connect(gtkpp::ButtonEventType::ButtonReleased, &nemo_path_bar_slider_button_release, widget);
         button->drag_dest_set();
         button->drag_dest_set_track_motion(true);
-        button->connect(gtk::ButtonEventType::DragMotion, &nemo_path_bar_slider_drag_motion, widget);
-        button->connect(gtk::ButtonEventType::DragLeave, &nemo_path_bar_slider_drag_leave, widget);
+        button->connect(gtkpp::ButtonEventType::DragMotion, &nemo_path_bar_slider_drag_motion, widget);
+        button->connect(gtkpp::ButtonEventType::DragLeave, &nemo_path_bar_slider_drag_leave, widget);
 
         return button;
     }

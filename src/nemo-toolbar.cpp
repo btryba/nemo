@@ -56,7 +56,7 @@ static void nemo_toolbar_set_property (GObject *object, guint property_id, const
 
 namespace nemo
 {
-    Toolbar::Toolbar(GtkBox* cClass, GtkActionGroup* actionGroup) : gtk::Box(cClass),
+    Toolbar::Toolbar(GtkBox* cClass, GtkActionGroup* actionGroup) : gtkpp::Box(cClass),
         action_group(actionGroup),
         previous_button{NEMO_ACTION_BACK, action_group},
         next_button{NEMO_ACTION_FORWARD, action_group},
@@ -85,7 +85,7 @@ namespace nemo
         toolbar.get_style_context()->add_class(GTK_STYLE_CLASS_PRIMARY_TOOLBAR);
 	
         // Back/Forward/Up 
-        gtk::Box* box = new gtk::Box(GTK_ORIENTATION_HORIZONTAL);
+        gtkpp::Box* box = new gtkpp::Box(GTK_ORIENTATION_HORIZONTAL);
 
         box->add(previous_button);
         box->add(next_button);
@@ -98,7 +98,7 @@ namespace nemo
         navigation_box.set_margin_right(6);
 
         // Refresh 
-        box = new gtk::Box(GTK_ORIENTATION_HORIZONTAL);
+        box = new gtkpp::Box(GTK_ORIENTATION_HORIZONTAL);
         box->add(refresh_button);
         box->get_style_context()->add_class(GTK_STYLE_CLASS_RAISED);
 
@@ -108,7 +108,7 @@ namespace nemo
         refresh_box.set_margin_right(6);
 
         // Home/Computer 
-        box = new gtk::Box(GTK_ORIENTATION_HORIZONTAL);
+        box = new gtkpp::Box(GTK_ORIENTATION_HORIZONTAL);
         box->add(home_button);
         box->add(computer_button);
         box->get_style_context()->add_class(GTK_STYLE_CLASS_RAISED);
@@ -123,7 +123,7 @@ namespace nemo
         stack.set_transition_duration(150);
 
         // Regular Path Bar 
-        gtk::Box* hbox = new gtk::Box(GTK_ORIENTATION_HORIZONTAL);
+        gtkpp::Box* hbox = new gtkpp::Box(GTK_ORIENTATION_HORIZONTAL);
         hbox->pack_start(stack);
 
         path_bar = nemo_path_bar_new();
@@ -134,7 +134,7 @@ namespace nemo
         stack.add_named(location_bar, "location_bar");
         hbox->show_all();
 
-        gtk::ToolItem* tool_box = new gtk::ToolItem();
+        gtkpp::ToolItem* tool_box = new gtkpp::ToolItem();
         tool_box->set_expand(true);
         tool_box->add(*hbox);
         toolbar.add(*tool_box);
@@ -142,7 +142,7 @@ namespace nemo
         toolbar.takeOnOwnership(tool_box); //So that the c++ wrapper doesn't leak
 
         // Search/Open in Terminal/New Folder/Toggle Location 
-        box = new gtk::Box(GTK_ORIENTATION_HORIZONTAL);
+        box = new gtkpp::Box(GTK_ORIENTATION_HORIZONTAL);
         box->add(toggle_location_button);
         box->add(open_terminal_button);
         box->add(new_folder_button);
@@ -158,7 +158,7 @@ namespace nemo
         setup_root_info_bar();
 
         // View Select 
-        box = new gtk::Box(GTK_ORIENTATION_HORIZONTAL);
+        box = new gtkpp::Box(GTK_ORIENTATION_HORIZONTAL);
         box->add(icon_view_button);
         box->add(list_view_button);
         box->add(compact_view_button);
@@ -256,7 +256,7 @@ namespace nemo
             view_box.show();
     }
 
-    void Toolbar::showHideButton(gtk::Button& button, const char* preferenceName) 
+    void Toolbar::showHideButton(gtkpp::Button& button, const char* preferenceName) 
     {
         if (g_settings_get_boolean (nemo_preferences, preferenceName) == false ) 
             button.hide();

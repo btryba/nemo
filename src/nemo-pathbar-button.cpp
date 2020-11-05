@@ -15,12 +15,12 @@ extern "C"
 #include "nemo-window-slot-dnd.h"
 }
 
-#include "gtk_box.hpp"
+#include <gtkpp/gtkpp-Box.hpp>
 
 namespace nemo
 {
     PathBarButton::PathBarButton(NemoFile *nemoFile, bool current_dir, bool base_dir, bool desktop_is_home)
-        : gtk::ToggleButton(),
+        : gtkpp::ToggleButton(),
         dir_name{nemo_file_get_display_name (nemoFile)},
         file{nemo_file_ref (nemoFile)},
         mount_icon_name{nullptr},
@@ -38,7 +38,7 @@ namespace nemo
         char *uri;
 
         GFile *tempPath = nemo_file_get_location (nemoFile);
-        gtk::Box* box = new gtk::Box{GTK_ORIENTATION_HORIZONTAL, 2};
+        gtkpp::Box* box = new gtkpp::Box{GTK_ORIENTATION_HORIZONTAL, 2};
 
         setup_button_type(tempPath, desktop_is_home);
         
@@ -57,7 +57,7 @@ namespace nemo
             case ButtonType::Desktop:
             case ButtonType::Mount:
             case ButtonType::DefaultLocation:
-                label = new gtk::Label(nullptr);
+                label = new gtkpp::Label(nullptr);
                 label->set_ellipsize(PANGO_ELLIPSIZE_MIDDLE);
                 box->pack_start(image, false, false);
                 box->pack_start(*label, false, false);
@@ -67,7 +67,7 @@ namespace nemo
             case ButtonType::Xdg:
             case ButtonType::Normal:
             default:
-                label = new gtk::Label(nullptr);
+                label = new gtkpp::Label(nullptr);
                 label->set_ellipsize(PANGO_ELLIPSIZE_MIDDLE);
                 box->pack_start(image, false, false);
                 box->pack_start(*label, false, false);

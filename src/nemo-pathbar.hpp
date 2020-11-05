@@ -1,12 +1,12 @@
 #ifndef __NEMO_PATHBAR_HPP__
 #define __NEMO_PATHBAR_HPP__
 
-#include "gtk_container.hpp"
-#include "gtk_button.hpp"
+#include <gtkpp/gtkpp-Container.hpp>
+#include <gtkpp/gtkpp-Button.hpp>
 
 namespace nemo
 {
-    struct PathBar : public gtk::Container
+    struct PathBar : public gtkpp::Container
     {
         GdkWindow *event_window;
 
@@ -21,8 +21,8 @@ namespace nemo
         GList *scrolled_root_button;
         GList *fake_root;
 
-        gtk::Button *up_slider_button;
-	    gtk::Button *down_slider_button;
+        gtkpp::Button *up_slider_button;
+	    gtkpp::Button *down_slider_button;
         unsigned int settings_signal_id;
         int slider_width;
         int16_t spacing;
@@ -39,7 +39,7 @@ namespace nemo
 
         PathBar(GtkContainer* cClass);
         ~PathBar();
-        gtk::Button* get_slider_button(GtkPositionType position);
+        gtkpp::Button* get_slider_button(GtkPositionType position);
         void scroll_up();
         void scroll_down();
         void update_button_types();

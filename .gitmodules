@@ -1,3 +1,6 @@
 [submodule "libraries/eel"]
 	path = libraries/eel
 	url = http://github.com/btryba/eel.git
+[submodule "libraries/gtkpp"]
+	path = libraries/gtkpp
+	url = https://github.com/btryba/gtkpp.git

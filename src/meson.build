@@ -14,27 +14,9 @@ nemoBuiltSources = gnome.gdbus_codegen(
   object_manager: true
 )
 
-gtkWrapperSources = [
-  'gtk_box.cpp',
-  'gtk_button.cpp',
-  'gtk_container.cpp',
-  'gtk_file.cpp',
-  'gtk_image.cpp',
-  'gtk_label.cpp',
-  'gtk_settings.cpp',
-  'gtk_stack.cpp',
-  'gtk_stylecontext.cpp',
-  'gtk_togglebutton.cpp',
-  'gtk_toolbar.cpp',
-  'gtk_toolitem.cpp',
-  'gtk_widget.cpp',
-  'gtk_widgetpath.cpp',
-]
-
 nemoCommon_sources = [
   dbusBuiltSources,
   nemoBuiltSources,
-  gtkWrapperSources,
   'nemo-action-config-widget.c',
   'nemo-application.c',
   'nemo-blank-desktop-window.c',
@@ -121,7 +103,7 @@ if enableEmptyView
   nemoCommon_sources += 'nemo-empty-view.c'
 endif
 
-nemo_deps = [ cinnamon, gail, glib, gtk, libnotif, libxml, math, x11,
+nemo_deps = [ cinnamon, gail, glib, gtk, gtkpp, libnotif, libxml, math, x11,
   egg, nemo_extension, nemo_private, xapp ]
 
 if exempi_enabled

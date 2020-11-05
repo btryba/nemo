@@ -1,80 +1,51 @@
 #ifndef __NEMO_TOOLBAR_HPP__
 #define __NEMO_TOOLBAR_HPP__
 
-#include "gtk_stylecontext.hpp"
-#include "gtk_widget.hpp"
-#include "gtk_button.hpp"
-#include "gtk_toolitem.hpp"
-#include "gtk_stack.hpp"
-#include "gtk_box.hpp"
-#include "gtk_toolbar.hpp"
-#include "gtk_togglebutton.hpp"
-
-namespace gtk
-{
-    struct ActionGroup
-    {
-        GtkActionGroup* action_group;
-        public:
-        GtkActionGroup* getPtr()
-        {
-            return action_group;
-        }
-    };
-
-    struct UIManager
-    {
-        GtkUIManager* ui_manager;
-        public:
-        UIManager()
-        {
-            ui_manager = gtk_ui_manager_new();
-        }
-        GtkUIManager* getPtr()
-        {
-            return ui_manager;
-        }
-        void insert_action_group(GtkActionGroup* actionGroup)
-        {
-             gtk_ui_manager_insert_action_group (ui_manager, actionGroup, 0);
-        }
-    };
-}
+#include <gtkpp/gtkpp-StyleContext.hpp>
+#include <gtkpp/gtkpp-Widget.hpp>
+#include <gtkpp/gtkpp-Button.hpp>
+#include <gtkpp/gtkpp-ToolItem.hpp>
+#include <gtkpp/gtkpp-Stack.hpp>
+#include <gtkpp/gtkpp-Box.hpp>
+#include <gtkpp/gtkpp-ToolBar.hpp>
+#include <gtkpp/gtkpp-ToggleButton.hpp>
+#include <gtkpp/gtkpp-ActionGroup.hpp>
+#include <gtkpp/gtkpp-UIManager.hpp>
 
 namespace nemo
 {
-    class Toolbar : public gtk::Box
+    class Toolbar : public gtkpp::Box
     {
-        gtk::ToolBar toolbar;
+        gtkpp::ToolBar toolbar;
 
-        gtk::UIManager ui_manager;
+        gtkpp::UIManager ui_manager;
         GtkActionGroup *action_group;
 
-        gtk::Button previous_button;
-        gtk::Button next_button;
-        gtk::Button up_button;
-        gtk::Button refresh_button;
-        gtk::Button home_button;
-        gtk::Button computer_button;
-        gtk::Button toggle_location_button;
-        gtk::Button open_terminal_button;
-        gtk::Button new_folder_button;
-        gtk::ToggleButton search_button;
-        gtk::ToggleButton show_thumbnails_button;
-        gtk::ToggleButton icon_view_button;
-        gtk::ToggleButton list_view_button;
-        gtk::ToggleButton compact_view_button;
+        gtkpp::Button previous_button;
+        gtkpp::Button next_button;
+        gtkpp::Button up_button;
+        gtkpp::Button refresh_button;
+        gtkpp::Button home_button;
+        gtkpp::Button computer_button;
+        gtkpp::Button toggle_location_button;
+        gtkpp::Button open_terminal_button;
+        gtkpp::Button new_folder_button;
+        gtkpp::ToggleButton search_button;
+        gtkpp::ToggleButton show_thumbnails_button;
+        gtkpp::ToggleButton icon_view_button;
+        gtkpp::ToggleButton list_view_button;
+        gtkpp::ToggleButton compact_view_button;
 
-        gtk::ToolItem navigation_box;
-        gtk::ToolItem refresh_box;
-        gtk::ToolItem location_box;
-        gtk::ToolItem tools_box;
-        gtk::ToolItem view_box;
+        gtkpp::ToolItem navigation_box;
+        gtkpp::ToolItem refresh_box;
+        gtkpp::ToolItem location_box;
+        gtkpp::ToolItem tools_box;
+        gtkpp::ToolItem view_box;
 
         GtkWidget *path_bar;
         GtkWidget *location_bar;
         GtkWidget *root_bar;
-        gtk::Stack stack;
+        gtkpp::Stack stack;
 
         bool show_main_bar;
         bool show_location_entry;
@@ -96,7 +67,7 @@ namespace nemo
         private:
         void setup_root_info_bar();
         void update_root_state();
-        static void showHideButton(gtk::Button& button, const char* preferenceName);
+        static void showHideButton(gtkpp::Button& button, const char* preferenceName);
     };
 }
 

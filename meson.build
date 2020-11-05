@@ -202,6 +202,7 @@ po_subdir = join_paths(meson.source_root(), 'po')
 
 subdir('install-scripts')
 subdir('libraries/libegg')
+subdir('libraries/gtkpp')
 subdir('data')
 subdir('libraries/eel')
 subdir('files')
