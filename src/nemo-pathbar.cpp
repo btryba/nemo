@@ -318,31 +318,7 @@ namespace nemo
         return result;
     }
     
-    /* Size requisition:
-    *
-    * Ideally, our size is determined by another widget, and we are just filling
-    * available space.
-    */
-    void PathBar::get_preferred_width(int& minimum, int& natural)
-    {
-        if(down_slider_button == nullptr)
-            return;
-
-        minimum = natural = 0;
-
-        for (GList *list = button_list; list; list = list->next)
-        {
-            int child_min, child_nat;
-            buttonFromList(*list).get_preferred_width(child_min, child_nat);
-            minimum = MAX (minimum, child_min);
-            natural = MAX (natural, child_nat);
-        }
-
-        down_slider_button->get_preferred_width(slider_width);
-
-        minimum += slider_width * 2;
-        natural += slider_width * 2;
-    }
+    
     
     bool PathBar::set_path(GFile &file_path)
     {
@@ -408,11 +384,6 @@ namespace nemo
         bar->scroll_down();
     }
 
-    void PathBar::get_preferred_width_static(GtkWidget* widget, int* minimum, int* natural)
-    {
-        ((PathBar*)widget)->get_preferred_width(*minimum, *natural);
-    }
-    
     PathBarButton& PathBar::buttonFromList(GList& list)
     {
         return *((PathBarButton*)list.data);
@@ -596,6 +567,40 @@ static void nemo_path_bar_init (NemoPathBar *path_bar)
 {
     nemo::PathBar* cppClass = new nemo::PathBar((GtkContainer*)path_bar);
     path_bar->cppParent = cppClass;
+}
+
+/* Size requisition:
+    *
+    * Ideally, our size is determined by another widget, and we are just filling
+    * available space.
+    */
+   static void
+nemo_path_bar_get_preferred_width (GtkWidget *widget,
+                       gint      *minimum,
+                       gint      *natural)
+{
+    nemo::PathBarButton *button_data;
+    NemoPathBar *path_bar;
+    GList *list;
+    gint child_min, child_nat;
+
+    path_bar = NEMO_PATH_BAR (widget);
+
+    *minimum = *natural = 0;
+
+    for (list = getCppObject(path_bar).button_list; list; list = list->next) {
+        button_data = (nemo::PathBarButton*)(list->data);
+        gtk_widget_get_preferred_width (button_data->getPtr(), &child_min, &child_nat);
+        *minimum = MAX (*minimum, child_min);
+        *natural = MAX (*natural, child_nat);
+    }
+
+    gtk_widget_get_preferred_width (getCppObject(path_bar).down_slider_button->getPtr(),
+                                    &getCppObject(path_bar).slider_width,
+                                    NULL);
+
+    *minimum += getCppObject(path_bar).slider_width * 2;
+    *natural += getCppObject(path_bar).slider_width * 2;
 }
 
 static void nemo_path_bar_finalize (GObject *object)
@@ -1258,7 +1263,7 @@ static void nemo_path_bar_class_init(NemoPathBarClass *path_bar_class)
     gobject_class->dispose = nemo_path_bar_dispose;
 
     widget_class->get_preferred_height = nemo_path_bar_get_preferred_height;
-    widget_class->get_preferred_width = nemo::PathBar::get_preferred_width_static;
+    widget_class->get_preferred_width = nemo_path_bar_get_preferred_width;
     widget_class->realize = nemo_path_bar_realize;
     widget_class->unrealize = nemo_path_bar_unrealize;
     widget_class->unmap = nemo_path_bar_unmap;

@@ -17,6 +17,8 @@
 
 */
 
+extern "C"
+{
 #include "nemo-action-manager.h"
 #include "nemo-directory.h"
 #include "nemo-action.h"
@@ -24,7 +26,7 @@
 #define DEBUG_FLAG NEMO_DEBUG_ACTIONS
 #include <libnemo-private/nemo-debug.h>
 #include "nemo-file-utilities.h"
-
+}
 
 G_DEFINE_TYPE (NemoActionManager, nemo_action_manager, G_TYPE_OBJECT);
 
@@ -83,18 +85,18 @@ add_directory_to_directory_list (NemoActionManager *action_manager,
         nemo_directory_ref (directory);
 
         attributes =
-            NEMO_FILE_ATTRIBUTES_FOR_ICON |
+            (NemoFileAttributes)(NEMO_FILE_ATTRIBUTES_FOR_ICON |
             NEMO_FILE_ATTRIBUTE_INFO |
-            NEMO_FILE_ATTRIBUTE_DIRECTORY_ITEM_COUNT;
+            NEMO_FILE_ATTRIBUTE_DIRECTORY_ITEM_COUNT);
 
         nemo_directory_file_monitor_add (directory, directory_list,
                              FALSE, attributes,
                              (NemoDirectoryCallback)changed_callback, action_manager);
 
         g_signal_connect_object (directory, "files_added",
-                     G_CALLBACK (changed_callback), action_manager, 0);
+                     G_CALLBACK (changed_callback), action_manager, (GConnectFlags)0);
         g_signal_connect_object (directory, "files_changed",
-                     G_CALLBACK (changed_callback), action_manager, 0);
+                     G_CALLBACK (changed_callback), action_manager, (GConnectFlags)0);
 
         *directory_list = g_list_append (*directory_list, directory);
     }
@@ -104,12 +106,12 @@ static void
 remove_directory_from_directory_list (NemoActionManager *action_manager,
                                           NemoDirectory *directory,
                                                  GList **directory_list,
-                                               GCallback changed_callback)
+                                               GCallback(changed_callback))
 {
     *directory_list = g_list_remove (*directory_list, directory);
 
     g_signal_handlers_disconnect_by_func (directory,
-                          G_CALLBACK (changed_callback),
+                          (gpointer)G_CALLBACK (changed_callback),
                           action_manager);
 
     nemo_directory_file_monitor_remove (directory, directory_list);
@@ -308,11 +310,11 @@ set_up_actions (NemoActionManager *action_manager)
         void_action_list (action_manager);
 
     for (dir = action_manager->actions_directory_list; dir != NULL; dir = dir->next) {
-        directory = dir->data;
+        directory = (NemoDirectory*)dir->data;
         file_list = nemo_directory_get_file_list (directory);
         file_list = g_list_sort(file_list, _cbSortFileList);
         for (node = file_list; node != NULL; node = node->next) {
-            file = node->data;
+            file = (NemoFile*)node->data;
             if (!g_str_has_suffix (nemo_file_peek_name (file), ".nemo_action") ||
                 !nemo_global_preferences_should_load_plugin (nemo_file_peek_name (file), NEMO_PLUGIN_PREFERENCES_DISABLED_ACTIONS))
                 continue;
@@ -372,7 +374,7 @@ nemo_action_manager_constructed (GObject *object)
 NemoActionManager *
 nemo_action_manager_new (void)
 {
-    return g_object_new (NEMO_TYPE_ACTION_MANAGER, NULL);
+    return (NemoActionManager*)g_object_new (NEMO_TYPE_ACTION_MANAGER, NULL);
 }
 
 static void
@@ -385,14 +387,14 @@ nemo_action_manager_dispose (GObject *object)
         copy = nemo_directory_list_copy (action_manager->actions_directory_list);
 
         for (node = copy; node != NULL; node = node->next) {
-            remove_directory_from_actions_directory_list (action_manager, node->data);
+            remove_directory_from_actions_directory_list (action_manager, (NemoDirectory*)node->data);
         }
         g_list_free (action_manager->actions_directory_list);
         action_manager->actions_directory_list = NULL;
         nemo_directory_list_free (copy);
     }
 
-    g_signal_handlers_disconnect_by_func (nemo_plugin_preferences, G_CALLBACK (plugin_prefs_changed), action_manager);
+    g_signal_handlers_disconnect_by_func (nemo_plugin_preferences, (gpointer)G_CALLBACK (plugin_prefs_changed), action_manager);
 
     G_OBJECT_CLASS (parent_class)->dispose (object);
 }

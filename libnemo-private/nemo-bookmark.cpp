@@ -23,7 +23,8 @@
  * Authors: John Sullivan <sullivan@eazel.com>
  *          Cosimo Cecchi <cosimoc@redhat.com>
  */
-
+extern "C"
+{
 #include <config.h>
 
 #include "nemo-bookmark.h"
@@ -40,7 +41,7 @@
 
 #define DEBUG_FLAG NEMO_DEBUG_BOOKMARKS
 #include <libnemo-private/nemo-debug.h>
-
+}
 enum {
 	CONTENTS_CHANGED,
     LOCATION_MOUNTED,
@@ -252,7 +253,7 @@ bookmark_file_changed_callback (NemoFile *file,
 		DEBUG ("%s: file got moved", nemo_bookmark_get_name (bookmark));
 
 		g_object_unref (bookmark->details->location);
-		bookmark->details->location = g_object_ref (location);
+		bookmark->details->location = (GFile*)g_object_ref (location);
 
 		g_object_notify_by_pspec (G_OBJECT (bookmark), properties[PROP_LOCATION]);
 		g_signal_emit (bookmark, signals[CONTENTS_CHANGED], 0);
@@ -296,7 +297,7 @@ nemo_bookmark_disconnect_file (NemoBookmark *bookmark)
 		       nemo_bookmark_get_name (bookmark));
 
         g_signal_handlers_disconnect_by_func (bookmark->details->file,
-                                              G_CALLBACK (bookmark_file_changed_callback),
+                                              (gpointer)G_CALLBACK (bookmark_file_changed_callback),
                                               bookmark);
 
 		g_clear_object (&bookmark->details->file);
@@ -321,7 +322,7 @@ nemo_bookmark_connect_file (NemoBookmark *bookmark)
 
         g_signal_connect_object (bookmark->details->file, "changed",
                                  G_CALLBACK (bookmark_file_changed_callback),
-                                 bookmark, 0);
+                                 bookmark, (GConnectFlags)0);
 	}
 
 	/* Set icon based on available information. */
@@ -362,7 +363,7 @@ nemo_bookmark_set_property (GObject *object,
         }
 		break;
 	case PROP_LOCATION:
-		self->details->location = g_value_dup_object (value);
+		self->details->location = (GFile*)g_value_dup_object (value);
 		break;
 	case PROP_CUSTOM_NAME:
 		self->details->has_custom_name = g_value_get_boolean (value);
@@ -374,7 +375,7 @@ nemo_bookmark_set_property (GObject *object,
         if (self->details->metadata)
             g_clear_pointer (&self->details->metadata, nemo_bookmark_metadata_free);
 
-        self->details->metadata = g_value_get_pointer (value);
+        self->details->metadata = (NemoBookmarkMetadata*)g_value_get_pointer (value);
         break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
@@ -435,9 +436,9 @@ nemo_bookmark_finalize (GObject *object)
 }
 
 static void
-nemo_bookmark_class_init (NemoBookmarkClass *class)
+nemo_bookmark_class_init (NemoBookmarkClass *klass)
 {
-	GObjectClass *oclass = G_OBJECT_CLASS (class);
+	GObjectClass *oclass = G_OBJECT_CLASS (klass);
 
 	oclass->finalize = nemo_bookmark_finalize;
 	oclass->get_property = nemo_bookmark_get_property;
@@ -445,7 +446,7 @@ nemo_bookmark_class_init (NemoBookmarkClass *class)
 
 	signals[CONTENTS_CHANGED] =
 		g_signal_new ("contents-changed",
-		              G_TYPE_FROM_CLASS (class),
+		              G_TYPE_FROM_CLASS (klass),
 		              G_SIGNAL_RUN_LAST,
 		              G_STRUCT_OFFSET (NemoBookmarkClass, contents_changed),
 		              NULL, NULL,
@@ -454,7 +455,7 @@ nemo_bookmark_class_init (NemoBookmarkClass *class)
 
     signals[LOCATION_MOUNTED] =
         g_signal_new ("location-mounted",
-                      G_TYPE_FROM_CLASS (class),
+                      G_TYPE_FROM_CLASS (klass),
                       G_SIGNAL_RUN_LAST,
                       G_STRUCT_OFFSET (NemoBookmarkClass, location_mounted),
                       NULL, NULL,
@@ -467,38 +468,38 @@ nemo_bookmark_class_init (NemoBookmarkClass *class)
 				     "Bookmark's name",
 				     "The name of this bookmark",
 				     NULL,
-				     G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_CONSTRUCT);
+				     (GParamFlags)(G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_CONSTRUCT));
 
 	properties[PROP_CUSTOM_NAME] =
 		g_param_spec_boolean ("custom-name",
 				      "Whether the bookmark has a custom name",
 				      "Whether the bookmark has a custom name",
 				      FALSE,
-				      G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_CONSTRUCT);
+				      (GParamFlags)(G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_CONSTRUCT));
 
 	properties[PROP_LOCATION] =
 		g_param_spec_object ("location",
 				     "Bookmark's location",
 				     "The location of this bookmark",
 				     G_TYPE_FILE,
-				     G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_CONSTRUCT_ONLY);
+				     (GParamFlags)(G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_CONSTRUCT_ONLY));
 
 	properties[PROP_ICON_NAME] =
 		g_param_spec_string ("icon-name",
 				     "Bookmark's icon name",
 				     "The icon name for this bookmark",
 				     NULL,
-				     G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+				     (GParamFlags)(G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
     properties[PROP_METADATA] =
         g_param_spec_pointer ("metadata",
                      "Bookmark's non-gvfs metadata",
                      "Metadata for defining the bookmark's icon",
-                     G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+                     (GParamFlags)(G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
 	g_object_class_install_properties (oclass, NUM_PROPERTIES, properties);
 
-	g_type_class_add_private (class, sizeof (NemoBookmarkDetails));
+	g_type_class_add_private (klass, sizeof (NemoBookmarkDetails));
 }
 
 static void
@@ -647,7 +648,7 @@ nemo_bookmark_get_location (NemoBookmark *bookmark)
 	 */
 	nemo_bookmark_connect_file (bookmark);
 
-	return g_object_ref (bookmark->details->location);
+	return (GFile*)g_object_ref (bookmark->details->location);
 }
 
 char *
@@ -782,7 +783,7 @@ char_list_to_strv (GList *list)
     GPtrArray *array = g_ptr_array_new ();
 
     for (iter = list; iter != NULL; iter = iter->next) {
-        g_ptr_array_add (array, g_strdup (iter->data));
+        g_ptr_array_add (array, g_strdup ((const gchar*)iter->data));
     }
 
     g_ptr_array_add (array, NULL);

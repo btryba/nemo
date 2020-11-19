@@ -16,7 +16,8 @@
    Boston, MA 02110-1335, USA.
 
 */
-
+extern "C"
+{
 #include "nemo-action.h"
 #include <eel/eel-string.h>
 #include <eel/eel-vfs-extensions.h>
@@ -24,6 +25,7 @@
 #include <gdk/gdk.h>
 #include "nemo-file-utilities.h"
 #include "nemo-program-choosing.h"
+}
 
 #define DEBUG_FLAG NEMO_DEBUG_ACTIONS
 #include <libnemo-private/nemo-debug.h>
@@ -174,7 +176,7 @@ nemo_action_class_init (NemoActionClass *klass)
                                                           "Key File Path",
                                                           "The key file path associated with this action",
                                                           NULL,
-                                                          G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY)
+                                                          (GParamFlags)(G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY))
                                      );
 
     g_object_class_install_property (object_class,
@@ -357,7 +359,7 @@ on_dbus_appeared (GDBusConnection *connection,
                   const gchar     *name_owner,
                   gpointer         user_data)
 {
-    DBusCondition *cond = user_data;
+    DBusCondition *cond = (DBusCondition*)user_data;
 
     cond->exists = TRUE;
     queue_recalc_dbus_conditions (cond->action);
@@ -368,7 +370,7 @@ on_dbus_disappeared (GDBusConnection *connection,
                      const gchar     *name,
                      gpointer         user_data)
 {
-    DBusCondition *cond = user_data;
+    DBusCondition *cond = (DBusCondition*)user_data;
 
     cond->exists = FALSE;
     queue_recalc_dbus_conditions (cond->action);
@@ -397,7 +399,7 @@ setup_dbus_condition (NemoAction *action, const gchar *condition)
     action->dbus = g_list_append (action->dbus, cond);
     cond->watch_id = g_bus_watch_name (G_BUS_TYPE_SESSION,
                                        cond->name,
-                                       0,
+                                       (GBusNameWatcherFlags)0,
                                        on_dbus_appeared,
                                        on_dbus_disappeared,
                                        cond,
@@ -605,7 +607,7 @@ setup_gsettings_condition (NemoAction *action,
 
                 cond->action = action;
                 cond->condition_string = g_strdup (condition);
-                cond->settings = g_object_ref (settings);
+                cond->settings = (GSettings*)g_object_ref (settings);
                 cond->key = g_strdup (keys[i]);
 
                 signal_string = g_strdup_printf ("changed::%s", cond->key);
@@ -728,7 +730,7 @@ nemo_action_constructed (GObject *object)
         type = SELECTION_NOT_NONE;
     else {
         gint val = (int) g_ascii_strtoll (selection_string, NULL, 10);
-        type = val > 0 ? val : SELECTION_SINGLE;
+        type = val > 0 ? (SelectionType)val : SELECTION_SINGLE;
     }
 
     g_free (selection_string);
@@ -957,7 +959,7 @@ nemo_action_new (const gchar *name,
     g_strfreev (deps);
     g_key_file_free (key_file);
 
-    return finish ? g_object_new (NEMO_TYPE_ACTION,
+    return finish ? (NemoAction*)g_object_new (NEMO_TYPE_ACTION,
                                   "name", name,
                                   "key-file-path", path,
                                   NULL): NULL;
@@ -1018,13 +1020,13 @@ nemo_action_set_property (GObject         *object,
       nemo_action_set_key_file_path (action, g_value_get_string (value));
       break;
     case PROP_SELECTION_TYPE:
-      action->selection_type = g_value_get_int (value);
+      action->selection_type = (SelectionType)g_value_get_int (value);
       break;
     case PROP_EXTENSIONS:
-      nemo_action_set_extensions (action, g_value_get_pointer (value));
+      nemo_action_set_extensions (action, (gchar**)g_value_get_pointer (value));
       break;
     case PROP_MIMES:
-      nemo_action_set_mimetypes (action, g_value_get_pointer (value));
+      nemo_action_set_mimetypes (action, (gchar**)g_value_get_pointer (value));
       break;
     case PROP_EXEC:
       nemo_action_set_exec (action, g_value_get_string (value));
@@ -1042,13 +1044,13 @@ nemo_action_set_property (GObject         *object,
       nemo_action_set_orig_tt (action, g_value_get_string (value));
       break;
     case PROP_QUOTE_TYPE:
-      action->quote_type = g_value_get_int (value);
+      action->quote_type = (QuoteType)g_value_get_int (value);
       break;
     case PROP_SEPARATOR:
       nemo_action_set_separator (action, g_value_get_string (value));
       break;
     case PROP_CONDITIONS:
-      nemo_action_set_conditions (action, g_value_get_pointer (value));
+      nemo_action_set_conditions (action, (gchar**)g_value_get_pointer (value));
       break;
     case PROP_ESCAPE_SPACE:
       action->escape_space = g_value_get_boolean (value);
@@ -1266,6 +1268,7 @@ get_insertion_string (NemoAction *action, TokenType token_type, GList *selection
 
     switch (token_type) {
         case TOKEN_PATH_LIST:
+        {
             if (g_list_length (selection) > 0) {
                 for (l = selection; l != NULL; l = l->next) {
                     if (!first)
@@ -1282,7 +1285,9 @@ get_insertion_string (NemoAction *action, TokenType token_type, GList *selection
                 goto default_parent_path;
             }
             break;
+        }
         case TOKEN_URI_LIST:
+        {
             if (g_list_length (selection) > 0) {
                 for (l = selection; l != NULL; l = l->next) {
                     if (!first)
@@ -1298,10 +1303,10 @@ get_insertion_string (NemoAction *action, TokenType token_type, GList *selection
                 goto default_parent_path;
             }
             break;
+        }
         case TOKEN_PARENT_PATH:
-            ;
+        {
 default_parent_path:
-            ;
             gchar *path = get_path (action, parent);
             if (path == NULL) {
                 gchar *name = nemo_file_get_display_name (parent);
@@ -1316,7 +1321,9 @@ default_parent_path:
             str = insert_quote (action, str);
             g_free (path);
             break;
+        }
         case TOKEN_FILE_DISPLAY_NAME:
+        {
             if (g_list_length (selection) > 0) {
                 gchar *file_display_name = nemo_file_get_display_name (NEMO_FILE (selection->data));
                 str = score_append (action, str, file_display_name);
@@ -1325,10 +1332,10 @@ default_parent_path:
                 goto default_parent_display_name;
             }
             break;
+        }
         case TOKEN_PARENT_DISPLAY_NAME:
-            ;
+        {
 default_parent_display_name:
-            ;
             gchar *parent_display_name;
             gchar *real_display_name = nemo_file_get_display_name (parent);
             if (g_strcmp0 (real_display_name, "x-nemo-desktop") == 0)
@@ -1341,7 +1348,9 @@ default_parent_display_name:
             str = insert_quote (action, str);
             g_free (parent_display_name);
             break;
+        }
         case TOKEN_DEVICE:
+        {
             if (g_list_length (selection) > 0) {
                 for (l = selection; l != NULL; l = l->next) {
                     if (!first)
@@ -1358,7 +1367,9 @@ default_parent_display_name:
                 goto default_parent_path;
             }
             break;
+        }
         case TOKEN_FILE_DISPLAY_NAME_NO_EXT:
+        {
             if (g_list_length (selection) > 0) {
                 gchar *file_display_name = nemo_file_get_display_name (NEMO_FILE (selection->data));
                 str = score_append (action, str, eel_filename_strip_extension (file_display_name));
@@ -1367,6 +1378,7 @@ default_parent_display_name:
                 goto default_parent_path;
             }
             break;
+        }
         case TOKEN_NONE:
         default:
             break; 
@@ -1785,7 +1797,7 @@ nemo_action_get_visibility (NemoAction *action,
           g_free (raw_fn);
           guint i;
 
-          is_dir = get_is_dir (iter->data);
+          is_dir = get_is_dir ((NemoFile*)(iter->data));
 
           if (ext_count > 0) {
               for (i = 0; i < ext_count; i++) {

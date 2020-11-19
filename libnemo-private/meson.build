@@ -8,9 +8,9 @@ dbusBuiltSources = gnome.gdbus_codegen('nemo-generated',
 
 nemo_private_sources = [
   dbusBuiltSources,
-  'nemo-action-manager.c',
-  'nemo-action.c',
-  'nemo-bookmark.c',
+  'nemo-action-manager.cpp',
+  'nemo-action.cpp',
+  'nemo-bookmark.cpp',
   'nemo-cell-renderer-disk.c',
   'nemo-centered-placement-grid.c',
   'nemo-clipboard-monitor.c',
