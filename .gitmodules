@@ -4,3 +4,6 @@
 [submodule "libraries/gtkpp"]
 	path = libraries/gtkpp
 	url = https://github.com/btryba/gtkpp.git
+[submodule "libraries/simplex-lib"]
+	path = libraries/simplex-lib
+	url = https://github.com/btryba/simplex-lib.git

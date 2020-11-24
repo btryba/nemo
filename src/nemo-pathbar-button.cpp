@@ -27,17 +27,20 @@ namespace nemo
         image{},
         ignore_changes{false},
         fake_root{false},
-        xdg_documents_path{get_xdg_dir (G_USER_DIRECTORY_DOCUMENTS)},
-        xdg_download_path{get_xdg_dir (G_USER_DIRECTORY_DOWNLOAD)},
-        xdg_music_path{get_xdg_dir (G_USER_DIRECTORY_MUSIC)},
-        xdg_pictures_path{get_xdg_dir (G_USER_DIRECTORY_PICTURES)},
-        xdg_public_path{get_xdg_dir (G_USER_DIRECTORY_PUBLIC_SHARE)},
-        xdg_templates_path{get_xdg_dir (G_USER_DIRECTORY_TEMPLATES)},
-        xdg_videos_path{get_xdg_dir (G_USER_DIRECTORY_VIDEOS)}
+        xdg_documents_path{g_get_user_special_dir (G_USER_DIRECTORY_DOCUMENTS)},
+        xdg_download_path{g_get_user_special_dir (G_USER_DIRECTORY_DOWNLOAD)},
+        xdg_music_path{g_get_user_special_dir (G_USER_DIRECTORY_MUSIC)},
+        xdg_pictures_path{g_get_user_special_dir (G_USER_DIRECTORY_PICTURES)},
+        xdg_public_path{g_get_user_special_dir (G_USER_DIRECTORY_PUBLIC_SHARE)},
+        xdg_templates_path{g_get_user_special_dir (G_USER_DIRECTORY_TEMPLATES)},
+        xdg_videos_path{g_get_user_special_dir (G_USER_DIRECTORY_VIDEOS)}
     {
         char *uri;
 
-        GFile *tempPath = nemo_file_get_location (nemoFile);
+        GFile* temp = nemo_file_get_location (nemoFile); //adds to ref count.
+        simplex::string tempPath = g_file_get_path(temp);
+        g_object_unref (temp);
+
         gtkpp::Box* box = new gtkpp::Box{GTK_ORIENTATION_HORIZONTAL, 2};
 
         setup_button_type(tempPath, desktop_is_home);
@@ -76,14 +79,13 @@ namespace nemo
                 is_base_dir = base_dir;
         }
 
-        path = (GFile*)g_object_ref (tempPath);
-
         nemo_file_monitor_add (file, this, NEMO_FILE_ATTRIBUTES_FOR_ICON);
         show_all();
 
         update_button_state(current_dir);
 
-        uri = g_file_get_uri (path);
+        path = simplex::string{tempPath};
+        uri = getUriFromPath(path);
 
         if (!eel_uri_is_search (uri))
             setup_button_drag_source();
@@ -91,13 +93,10 @@ namespace nemo
         g_clear_pointer (&uri, g_free);
 
         nemo_drag_slot_proxy_init(getPtr(), file, nullptr);
-
-        g_object_unref (tempPath);
     }
 
     PathBarButton::~PathBarButton()
     {
-        g_object_unref (path);
         g_free (dir_name);
 
         g_clear_pointer (&mount_icon_name, g_free);
@@ -108,14 +107,6 @@ namespace nemo
             nemo_file_monitor_remove (file, this);
             nemo_file_unref (file);
         }
-
-        g_clear_object (&xdg_documents_path);
-        g_clear_object (&xdg_download_path);
-        g_clear_object (&xdg_music_path);
-        g_clear_object (&xdg_pictures_path);
-        g_clear_object (&xdg_public_path);
-        g_clear_object (&xdg_templates_path);
-        g_clear_object (&xdg_videos_path);
     }
 
     void PathBarButton::update_button_appearance()
@@ -210,20 +201,6 @@ namespace nemo
             return dir_name;
     }
 
-    /**
-     * Utility function. Return a GFile for the "special directory" if it exists, or NULL
-     * Ripped from nemo-file.c (nemo_file_is_user_special_directory) and slightly modified
-     */
-    GFile* PathBarButton::get_xdg_dir(GUserDirectory dir)
-    {
-        const char *special_dir = g_get_user_special_dir (dir);
-
-        if (special_dir)
-            return g_file_new_for_path (special_dir);
-        else
-            return nullptr;
-    }
-
     void PathBarButton::set_label_padding_size()
     {
         const char *dir_name = get_dir_name();
@@ -270,7 +247,7 @@ namespace nemo
                     this);
     }
 
-    void PathBarButton::setup_button_type(GFile *location, bool desktop_is_home)
+    void PathBarButton::setup_button_type(simplex::string location, bool desktop_is_home)
     {
         if (nemo_is_root_directory (location))
             type = ButtonType::Root;
@@ -286,19 +263,19 @@ namespace nemo
             else
                 type = ButtonType::Normal;
         }
-        else if (xdg_documents_path != NULL && g_file_equal (location, xdg_documents_path))
+        else if (xdg_documents_path != "" && location == xdg_documents_path)
             type = ButtonType::Xdg;
-        else if (xdg_download_path != NULL && g_file_equal (location, xdg_download_path))
+        else if (xdg_download_path != "" && location == xdg_download_path)
             type = ButtonType::Xdg;
-        else if (xdg_music_path != NULL && g_file_equal (location, xdg_music_path))
+        else if (xdg_music_path != "" && location == xdg_music_path)
             type = ButtonType::Xdg;
-        else if (xdg_pictures_path != NULL && g_file_equal (location, xdg_pictures_path))
+        else if (xdg_pictures_path != "" && location == xdg_pictures_path)
             type = ButtonType::Xdg;
-        else if (xdg_templates_path != NULL && g_file_equal (location, xdg_templates_path))
+        else if (xdg_templates_path != "" && location == xdg_templates_path)
             type = ButtonType::Xdg;
-        else if (xdg_videos_path != NULL && g_file_equal (location, xdg_videos_path))
+        else if (xdg_videos_path != "" && location == xdg_videos_path)
             type = ButtonType::Xdg;
-        else if (xdg_public_path != NULL && g_file_equal (location, xdg_public_path))
+        else if (xdg_public_path != "" && location == xdg_public_path)
             type = ButtonType::Xdg;
         else if (setup_file_path_mounted_mount (location))
         {
@@ -308,7 +285,7 @@ namespace nemo
             type = ButtonType::Normal;
     }
     
-    bool PathBarButton::setup_file_path_mounted_mount (GFile *location)
+    bool PathBarButton::setup_file_path_mounted_mount (simplex::string location)
     {
         GVolumeMonitor *volume_monitor;
         GList *mounts, *l;
@@ -360,6 +337,16 @@ namespace nemo
         return result;
     }
 
+//Private Static
+    char* PathBarButton::getUriFromPath(simplex::string path)
+    {
+        GFile* temp = g_file_new_for_path(path.toCString());
+        char* uri = g_file_get_uri (temp);
+        g_object_unref (temp);
+        
+        return uri;
+    }
+
 //Public Static
     void PathBarButton::button_drag_data_get_cb (GtkWidget *widget, GdkDragContext  *context, GtkSelectionData *selection_data, unsigned int info, unsigned int time_, gpointer user_data)
     {
@@ -369,8 +356,8 @@ namespace nemo
 
         button_data = (nemo::PathBarButton*)user_data;
 
-        uri_list[0] = g_file_get_uri (button_data->path);
-        uri_list[1] = NULL;
+        uri_list[0] = getUriFromPath(button_data->path);
+        uri_list[1] = nullptr;
 
         if (info == NEMO_ICON_DND_GNOME_ICON_LIST) 
         {
