@@ -1444,7 +1444,7 @@ void button_data_free(nemo::PathBarButton *button_data)
 
 static nemo::PathBarButton * make_directory_button (NemoPathBar *path_bar, NemoFile *file,  gboolean current_dir, gboolean base_dir)
 {
-     nemo::PathBarButton* button_data = new nemo::PathBarButton(file, current_dir, base_dir, nemo::PathBar::desktop_is_home);
+     nemo::PathBarButton* button_data = new nemo::PathBarButton(getCppObject(path_bar), file, current_dir, base_dir, nemo::PathBar::desktop_is_home);
      g_signal_connect (button_data->getPtr(), "clicked", G_CALLBACK (button_clicked_cb), button_data);
      //g_object_weak_ref (G_OBJECT (button_data->getPtr()), (GWeakNotify) button_data_free, button_data);
      button_data->file_changed_signal_id = g_signal_connect (button_data->file, "changed", G_CALLBACK (button_data_file_changed), button_data);

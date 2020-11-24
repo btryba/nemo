@@ -104,7 +104,7 @@ if enableEmptyView
 endif
 
 nemo_deps = [ cinnamon, gail, glib, gtk, gtkpp, libnotif, libxml, math, x11,
-  egg, nemo_extension, nemo_private, simplex, xapp ]
+  egg, nemo_extension, nemo_private, xapp ]
 
 if exempi_enabled
   nemo_deps += exempi
