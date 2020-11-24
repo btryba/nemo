@@ -10,6 +10,7 @@ extern "C"
 #include <gtkpp/gtkpp-ToggleButton.hpp>
 #include <gtkpp/gtkpp-Image.hpp>
 #include <gtkpp/gtkpp-Label.hpp>
+#include <gtkpp/gtkpp-File.hpp>
 #include <simplex-lib/include/string.hpp>
 
 namespace nemo
@@ -29,7 +30,7 @@ namespace nemo
     {
         ButtonType type;
         char *dir_name;
-        simplex::string path;
+        gtkpp::File path;
         ::NemoFile *file;
         unsigned int file_changed_signal_id;
 
@@ -63,9 +64,6 @@ namespace nemo
         void setup_button_drag_source();
         void setup_button_type(simplex::string location, bool desktop_is_home);
         bool setup_file_path_mounted_mount (simplex::string location);
-        
-        
-        static char* getUriFromPath(simplex::string path);
 
         public: //For Slot
         static void button_drag_data_get_cb (GtkWidget *widget, GdkDragContext  *context, GtkSelectionData *selection_data, guint info, guint time_, gpointer user_data);

@@ -22,6 +22,7 @@ namespace nemo
     PathBarButton::PathBarButton(NemoFile *nemoFile, bool current_dir, bool base_dir, bool desktop_is_home)
         : gtkpp::ToggleButton(),
         dir_name{nemo_file_get_display_name (nemoFile)},
+        path{nemo_file_get_location (nemoFile), false},
         file{nemo_file_ref (nemoFile)},
         mount_icon_name{nullptr},
         image{},
@@ -35,15 +36,9 @@ namespace nemo
         xdg_templates_path{g_get_user_special_dir (G_USER_DIRECTORY_TEMPLATES)},
         xdg_videos_path{g_get_user_special_dir (G_USER_DIRECTORY_VIDEOS)}
     {
-        char *uri;
-
-        GFile* temp = nemo_file_get_location (nemoFile); //adds to ref count.
-        simplex::string tempPath = g_file_get_path(temp);
-        g_object_unref (temp);
-
         gtkpp::Box* box = new gtkpp::Box{GTK_ORIENTATION_HORIZONTAL, 2};
 
-        setup_button_type(tempPath, desktop_is_home);
+        setup_button_type(path.get_path(), desktop_is_home);
         
         get_style_context()->add_class("text-button");
         set_focus_on_click(false);
@@ -84,13 +79,8 @@ namespace nemo
 
         update_button_state(current_dir);
 
-        path = simplex::string{tempPath};
-        uri = getUriFromPath(path);
-
-        if (!eel_uri_is_search (uri))
+        if (!eel_uri_is_search (path.get_uri()))
             setup_button_drag_source();
-
-        g_clear_pointer (&uri, g_free);
 
         nemo_drag_slot_proxy_init(getPtr(), file, nullptr);
     }
