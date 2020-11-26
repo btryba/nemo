@@ -29,7 +29,8 @@
 
 /* nemo-location-bar.c - Location bar for Nemo
  */
-
+extern "C"
+{
 #include <config.h>
 #include "nemo-location-bar.h"
 
@@ -47,6 +48,7 @@
 #include <libnemo-private/nemo-clipboard.h>
 #include <stdio.h>
 #include <string.h>
+}
 
 #define NEMO_DND_URI_LIST_TYPE 	  (char *)"text/uri-list"
 #define NEMO_DND_TEXT_PLAIN_TYPE  (char *)"text/plain"
@@ -83,7 +85,8 @@ static const GtkTargetEntry drop_types [] = {
 	{ NEMO_DND_TEXT_PLAIN_TYPE, 0, NEMO_DND_TEXT_PLAIN },
 };
 
-G_DEFINE_TYPE (NemoLocationBar, nemo_location_bar, GTK_TYPE_BOX);
+G_DEFINE_TYPE (NemoLocationBar, nemo_location_bar,
+	       GTK_TYPE_BOX);
 
 static NemoWindow *
 nemo_location_bar_get_window (GtkWidget *bar)
@@ -99,8 +102,11 @@ nemo_location_bar_get_window (GtkWidget *bar)
 static GFile *
 nemo_location_bar_get_location (NemoLocationBar *bar)
 {
-	char *user_location = gtk_editable_get_chars (GTK_EDITABLE (bar->details->entry), 0, -1);
-	GFile *location = g_file_parse_name (user_location);
+	char *user_location;
+	GFile *location;
+
+	user_location = gtk_editable_get_chars (GTK_EDITABLE (bar->details->entry), 0, -1);
+	location = g_file_parse_name (user_location);
 	g_free (user_location);
 
 	return location;
@@ -109,7 +115,9 @@ nemo_location_bar_get_location (NemoLocationBar *bar)
 static void
 emit_location_changed (NemoLocationBar *bar)
 {
-	GFile *location = nemo_location_bar_get_location (bar);
+	GFile *location;
+
+	location = nemo_location_bar_get_location (bar);
 	g_signal_emit (bar, signals[LOCATION_CHANGED], 0, location);
 	g_object_unref (location);
 }
@@ -219,7 +227,7 @@ drag_data_get_callback (GtkWidget *widget,
 	gchar *uri;
 
 	g_assert (selection_data != NULL);
-	self = callback_data;
+	self = (NemoLocationBar*)callback_data;
 
 	location = nemo_location_bar_get_location (self);
 	uri = g_file_get_uri (location);
@@ -314,7 +322,7 @@ editable_activate_callback (GtkEntry *entry,
 			    gpointer user_data)
 {
     nemo_location_bar_update_icon (NEMO_LOCATION_BAR (user_data));
-	NemoLocationBar *self = user_data;
+	NemoLocationBar *self = (NemoLocationBar*)user_data;
 	const char *entry_text;
 
 	entry_text = gtk_entry_get_text (entry);
@@ -361,7 +369,8 @@ finalize (GObject *object)
 	G_OBJECT_CLASS (nemo_location_bar_parent_class)->finalize (object);
 }
 
-static void nemo_location_bar_class_init (NemoLocationBarClass *klass)
+static void
+nemo_location_bar_class_init (NemoLocationBarClass *klass)
 {
 	GObjectClass *gobject_class;
 	GtkBindingSet *binding_set;
@@ -374,7 +383,7 @@ static void nemo_location_bar_class_init (NemoLocationBarClass *klass)
 	signals[CANCEL] = g_signal_new
 		("cancel",
 		 G_TYPE_FROM_CLASS (klass),
-		 G_SIGNAL_RUN_LAST | G_SIGNAL_ACTION,
+		 (GSignalFlags)(G_SIGNAL_RUN_LAST | G_SIGNAL_ACTION),
 		 G_STRUCT_OFFSET (NemoLocationBarClass,
 				  cancel),
 		 NULL, NULL,
@@ -390,7 +399,7 @@ static void nemo_location_bar_class_init (NemoLocationBarClass *klass)
 		 G_TYPE_NONE, 1, G_TYPE_OBJECT);
 
 	binding_set = gtk_binding_set_by_class (klass);
-	gtk_binding_entry_add_signal (binding_set, GDK_KEY_Escape, 0, "cancel", 0);
+	gtk_binding_entry_add_signal (binding_set, GDK_KEY_Escape, (GdkModifierType)0, "cancel", 0);
 
 	g_type_class_add_private (klass, sizeof (NemoLocationBarDetails));
 }
@@ -417,7 +426,7 @@ nemo_location_bar_init (NemoLocationBar *bar)
 	g_signal_connect_object (entry, "activate",
 				 G_CALLBACK (editable_activate_callback), bar, G_CONNECT_AFTER);
     g_signal_connect_object (entry, "changed",
-                             G_CALLBACK (editable_changed_callback), bar, 0);
+                             G_CALLBACK (editable_changed_callback), bar, (GConnectFlags)0);
 
     gtk_container_add (GTK_CONTAINER (event_box), entry);
 
@@ -429,17 +438,17 @@ nemo_location_bar_init (NemoLocationBar *bar)
 
 	/* Drag source */
 	gtk_drag_source_set (GTK_WIDGET (event_box),
-			     GDK_BUTTON1_MASK | GDK_BUTTON3_MASK,
+			     (GdkModifierType)(GDK_BUTTON1_MASK | GDK_BUTTON3_MASK),
 			     drag_types, G_N_ELEMENTS (drag_types),
-			     GDK_ACTION_COPY | GDK_ACTION_LINK);
+			     (GdkDragAction)(GDK_ACTION_COPY | GDK_ACTION_LINK));
 	g_signal_connect_object (event_box, "drag_data_get",
-				 G_CALLBACK (drag_data_get_callback), bar, 0);
+				 G_CALLBACK (drag_data_get_callback), bar, (GConnectFlags)0);
 
 	/* Drag dest. */
 	gtk_drag_dest_set (GTK_WIDGET (bar),
 			   GTK_DEST_DEFAULT_ALL,
 			   drop_types, G_N_ELEMENTS (drop_types),
-			   GDK_ACTION_COPY | GDK_ACTION_MOVE | GDK_ACTION_LINK);
+			   (GdkDragAction)(GDK_ACTION_COPY | GDK_ACTION_MOVE | GDK_ACTION_LINK));
 	g_signal_connect (bar, "drag_data_received",
 			  G_CALLBACK (drag_data_received_callback), NULL);
 
@@ -448,9 +457,12 @@ nemo_location_bar_init (NemoLocationBar *bar)
 	gtk_widget_show_all (GTK_WIDGET (bar));
 }
 
-GtkWidget * nemo_location_bar_new (void)
+GtkWidget *
+nemo_location_bar_new (void)
 {
-	GtkWidget* bar = gtk_widget_new (NEMO_TYPE_LOCATION_BAR, NULL);
+	GtkWidget *bar;
+
+	bar = gtk_widget_new (NEMO_TYPE_LOCATION_BAR, NULL);
 
 	return bar;
 }

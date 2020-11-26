@@ -43,7 +43,7 @@ nemoCommon_sources = [
   'nemo-interesting-folder-bar.c',
   'nemo-list-model.c',
   'nemo-list-view.c',
-  'nemo-location-bar.c',
+  'nemo-location-bar.cpp',
   'nemo-location-entry.c',
   'nemo-mime-actions.c',
   'nemo-navigation-action.c',
