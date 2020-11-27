@@ -45,7 +45,7 @@ typedef struct NemoLocationEntryDetails NemoLocationEntryDetails;
 
 typedef struct NemoLocationEntry {
 	NemoEntry parent;
-	NemoLocationEntryDetails *details;
+	void* cppObject;
 } NemoLocationEntry;
 
 typedef struct {

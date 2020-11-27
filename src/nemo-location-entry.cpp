@@ -29,7 +29,8 @@
 
 /* nemo-location-bar.c - Location bar for Nemo
  */
-
+extern "C"
+{
 #include <config.h>
 #include "nemo-location-entry.h"
 
@@ -45,20 +46,36 @@
 #include <libnemo-private/nemo-clipboard.h>
 #include <stdio.h>
 #include <string.h>
+}
 
-struct NemoLocationEntryDetails {
-	GtkLabel *label;
-	
-	char *current_directory;
-	GFilenameCompleter *completer;
-	
-	guint idle_id;
+#include <gtkpp/gtkpp-Widget.hpp>
 
-	gboolean has_special_text;
-	gboolean setting_special_text;
-	gchar *special_text;
-	NemoLocationEntryAction secondary_action;
-};
+namespace nemo
+{
+	struct LocationEntry : gtkpp::Widget
+	{
+		bool has_special_text;
+		bool setting_special_text;
+		GtkLabel *label;
+	
+		char *current_directory;
+		GFilenameCompleter *completer;
+		
+		guint idle_id;
+
+		
+		gchar *special_text;
+		NemoLocationEntryAction secondary_action;
+
+		LocationEntry(NemoLocationEntry* original) : gtkpp::Widget((GtkWidget*)original, false)
+		{}
+	};
+}
+
+nemo::LocationEntry& cppObject(void* original)
+{
+	return (nemo::LocationEntry&)(((NemoLocationEntry*)original)->cppObject);
+}
 
 G_DEFINE_TYPE (NemoLocationEntry, nemo_location_entry, NEMO_TYPE_ENTRY);
 
@@ -66,8 +83,7 @@ G_DEFINE_TYPE (NemoLocationEntry, nemo_location_entry, NEMO_TYPE_ENTRY);
    incomplete basename, then iterate through the directory trying to complete it.  If we
    find something, add it to the entry */
   
-static gboolean
-try_to_expand_path (gpointer callback_data)
+static gboolean try_to_expand_path (gpointer callback_data)
 {
 	NemoLocationEntry *entry;
 	GtkEditable *editable;
@@ -78,17 +94,17 @@ try_to_expand_path (gpointer callback_data)
 	editable = GTK_EDITABLE (entry);
 	user_location = gtk_editable_get_chars (editable, 0, -1);
 	user_location_length = g_utf8_strlen (user_location, -1);
-	entry->details->idle_id = 0;
+	cppObject(entry).idle_id = 0;
 
 	uri_scheme = g_uri_parse_scheme (user_location);
 
 	if (!g_path_is_absolute (user_location) && uri_scheme == NULL && user_location[0] != '~') {
-		absolute_location = g_build_filename (entry->details->current_directory, user_location, NULL);
-		suffix = g_filename_completer_get_completion_suffix (entry->details->completer,
+		absolute_location = g_build_filename (cppObject(entry).current_directory, user_location, NULL);
+		suffix = g_filename_completer_get_completion_suffix (cppObject(entry).completer,
 							     absolute_location);
 		g_free (absolute_location);
 	} else {
-		suffix = g_filename_completer_get_completion_suffix (entry->details->completer,
+		suffix = g_filename_completer_get_completion_suffix (cppObject(entry).completer,
 							     user_location);
 	}
 
@@ -114,8 +130,7 @@ try_to_expand_path (gpointer callback_data)
  * TRUE indicating that the GtkEntry consumed the key event for some
  * reason. This is a clone of code from GtkEntry.
  */
-static gboolean
-entry_would_have_inserted_characters (const GdkEventKey *event)
+static gboolean entry_would_have_inserted_characters (const GdkEventKey *event)
 {
 	switch (event->keyval) {
 	case GDK_KEY_BackSpace:
@@ -145,8 +160,7 @@ entry_would_have_inserted_characters (const GdkEventKey *event)
 	}
 }
 
-static int
-get_editable_number_of_chars (GtkEditable *editable)
+static int get_editable_number_of_chars (GtkEditable *editable)
 {
 	char *text;
 	int length;
@@ -157,8 +171,7 @@ get_editable_number_of_chars (GtkEditable *editable)
 	return length;
 }
 
-static void
-set_position_and_selection_to_end (GtkEditable *editable)
+static void set_position_and_selection_to_end (GtkEditable *editable)
 {
 	int end;
 
@@ -167,8 +180,7 @@ set_position_and_selection_to_end (GtkEditable *editable)
 	gtk_editable_set_position (editable, end);
 }
 
-static gboolean
-position_and_selection_are_at_end (GtkEditable *editable)
+static gboolean position_and_selection_are_at_end (GtkEditable *editable)
 {
 	int end;
 	int start_sel, end_sel;
@@ -182,13 +194,12 @@ position_and_selection_are_at_end (GtkEditable *editable)
 	return gtk_editable_get_position (editable) == end;
 }
 
-static void
-got_completion_data_callback (GFilenameCompleter *completer,
+static void got_completion_data_callback (GFilenameCompleter *completer,
 			      NemoLocationEntry *entry)
 {
-	if (entry->details->idle_id) {
-		g_source_remove (entry->details->idle_id);
-		entry->details->idle_id = 0;
+	if (cppObject(entry).idle_id) {
+		g_source_remove (cppObject(entry).idle_id);
+		cppObject(entry).idle_id = 0;
 	}
 	try_to_expand_path (entry);
 }
@@ -226,17 +237,17 @@ editable_event_after_callback (GtkEntry *entry,
 	 */
 	if (position_and_selection_are_at_end (editable)) {
 		if (entry_would_have_inserted_characters (keyevent)) {
-			if (location_entry->details->idle_id == 0) {
-				location_entry->details->idle_id = g_idle_add (try_to_expand_path, location_entry);
+			if (cppObject(location_entry).idle_id == 0) {
+				cppObject(location_entry).idle_id = g_idle_add (try_to_expand_path, location_entry);
 			}
 		}
 	} else {
 		/* FIXME: Also might be good to do this when you click
 		 * to change the position or selection.
 		 */
-		if (location_entry->details->idle_id != 0) {
-			g_source_remove (location_entry->details->idle_id);
-			location_entry->details->idle_id = 0;
+		if (cppObject(location_entry).idle_id != 0) {
+			g_source_remove (cppObject(location_entry).idle_id);
+			cppObject(location_entry).idle_id = 0;
 		}
 	}
 }
@@ -248,8 +259,8 @@ finalize (GObject *object)
 
 	entry = NEMO_LOCATION_ENTRY (object);
 
-	g_object_unref (entry->details->completer);
-	g_free (entry->details->special_text);
+	g_object_unref (cppObject(entry).completer);
+	g_free (cppObject(entry).special_text);
 
 	G_OBJECT_CLASS (nemo_location_entry_parent_class)->finalize (object);
 }
@@ -262,13 +273,13 @@ destroy (GtkWidget *object)
 	entry = NEMO_LOCATION_ENTRY (object);
 	
 	/* cancel the pending idle call, if any */
-	if (entry->details->idle_id != 0) {
-		g_source_remove (entry->details->idle_id);
-		entry->details->idle_id = 0;
+	if (cppObject(entry).idle_id != 0) {
+		g_source_remove (cppObject(entry).idle_id);
+		cppObject(entry).idle_id = 0;
 	}
 	
-	g_free (entry->details->current_directory);
-	entry->details->current_directory = NULL;
+	g_free (cppObject(entry).current_directory);
+	cppObject(entry).current_directory = NULL;
 	
 	GTK_WIDGET_CLASS (nemo_location_entry_parent_class)->destroy (object);
 }
@@ -277,11 +288,10 @@ static void
 nemo_location_entry_text_changed (NemoLocationEntry *entry,
 				      GParamSpec            *pspec)
 {
-	if (entry->details->setting_special_text) {
+	if (cppObject(entry).setting_special_text)
 		return;
-	}
 
-	entry->details->has_special_text = FALSE;
+	cppObject(entry).has_special_text = FALSE;
 }
 
 static void
@@ -290,7 +300,7 @@ nemo_location_entry_icon_release (GtkEntry *gentry,
 				      GdkEvent *event,
 				      gpointer unused)
 {
-	switch (NEMO_LOCATION_ENTRY (gentry)->details->secondary_action) {
+	switch (cppObject(gentry).secondary_action) {
 	case NEMO_LOCATION_ENTRY_ACTION_GOTO:
 		g_signal_emit_by_name (gentry, "activate", gentry);
 		break;
@@ -308,10 +318,10 @@ nemo_location_entry_focus_in (GtkWidget     *widget,
 {
 	NemoLocationEntry *entry = NEMO_LOCATION_ENTRY (widget);
 
-	if (entry->details->has_special_text) {
-		entry->details->setting_special_text = TRUE;
+	if (cppObject(entry).has_special_text) {
+		cppObject(entry).setting_special_text = true;
 		gtk_entry_set_text (GTK_ENTRY (entry), "");
-		entry->details->setting_special_text = FALSE;
+		cppObject(entry).setting_special_text = false;
 	}
 
 	return GTK_WIDGET_CLASS (nemo_location_entry_parent_class)->focus_in_event (widget, event);
@@ -332,7 +342,7 @@ nemo_location_entry_activate (GtkEntry *entry)
 
 		if (!g_path_is_absolute (entry_text) && uri_scheme == NULL && entry_text[0] != '~') {
 			/* Fix non absolute paths */
-			full_path = g_build_filename (loc_entry->details->current_directory, entry_text, NULL);
+			full_path = g_build_filename (cppObject(loc_entry).current_directory, entry_text, NULL);
 			gtk_entry_set_text (entry, full_path);
 			g_free (full_path);
 		}
@@ -344,31 +354,29 @@ nemo_location_entry_activate (GtkEntry *entry)
 }
 
 static void
-nemo_location_entry_class_init (NemoLocationEntryClass *class)
+nemo_location_entry_class_init (NemoLocationEntryClass *klass)
 {
 	GtkWidgetClass *widget_class;
 	GObjectClass *gobject_class;
 	GtkEntryClass *entry_class;
 
-	widget_class = GTK_WIDGET_CLASS (class);
+	widget_class = GTK_WIDGET_CLASS (klass);
 	widget_class->focus_in_event = nemo_location_entry_focus_in;
 	widget_class->destroy = destroy;
 
-	gobject_class = G_OBJECT_CLASS (class);
+	gobject_class = G_OBJECT_CLASS (klass);
 	gobject_class->finalize = finalize;
 
-	entry_class = GTK_ENTRY_CLASS (class);
+	entry_class = GTK_ENTRY_CLASS (klass);
 	entry_class->activate = nemo_location_entry_activate;
-
-	g_type_class_add_private (class, sizeof (NemoLocationEntryDetails));
 }
 
 void
 nemo_location_entry_update_current_location (NemoLocationEntry *entry,
 						 const char *location)
 {
-	g_free (entry->details->current_directory);
-	entry->details->current_directory = g_strdup (location);
+	g_free (cppObject(entry).current_directory);
+	cppObject(entry).current_directory = g_strdup (location);
 
 	nemo_entry_set_text (NEMO_ENTRY (entry), location);
 	set_position_and_selection_to_end (GTK_EDITABLE (entry));
@@ -378,7 +386,7 @@ void
 nemo_location_entry_set_secondary_action (NemoLocationEntry *entry,
 					      NemoLocationEntryAction secondary_action)
 {
-	if (entry->details->secondary_action == secondary_action) {
+	if (cppObject(entry).secondary_action == secondary_action) {
 		return;
 	}
 	switch (secondary_action) {
@@ -395,23 +403,20 @@ nemo_location_entry_set_secondary_action (NemoLocationEntry *entry,
 	default:
 		g_assert_not_reached ();
 	}
-	entry->details->secondary_action = secondary_action;
+	cppObject(entry).secondary_action = secondary_action;
 }
 
 NemoLocationEntryAction
 nemo_location_entry_get_secondary_action (NemoLocationEntry *entry)
 {
-    return entry->details->secondary_action;
+    return cppObject(entry).secondary_action;
 }
 
 static void
 nemo_location_entry_init (NemoLocationEntry *entry)
 {
-	entry->details = G_TYPE_INSTANCE_GET_PRIVATE (entry, NEMO_TYPE_LOCATION_ENTRY,
-						      NemoLocationEntryDetails);
-
-	entry->details->completer = g_filename_completer_new ();
-	g_filename_completer_set_dirs_only (entry->details->completer, TRUE);
+	cppObject(entry).completer = g_filename_completer_new ();
+	g_filename_completer_set_dirs_only (cppObject(entry).completer, TRUE);
 
 	nemo_location_entry_set_secondary_action (entry,
 						      NEMO_LOCATION_ENTRY_ACTION_CLEAR);
@@ -427,31 +432,30 @@ nemo_location_entry_init (NemoLocationEntry *entry)
 	g_signal_connect (entry, "icon-release",
 			  G_CALLBACK (nemo_location_entry_icon_release), NULL);
 
-	g_signal_connect (entry->details->completer, "got_completion_data",
+	g_signal_connect (cppObject(entry).completer, "got_completion_data",
 		          G_CALLBACK (got_completion_data_callback), entry);
 }
 
-GtkWidget *
-nemo_location_entry_new (void)
+GtkWidget * nemo_location_entry_new (void)
 {
-	GtkWidget *entry;
+	NemoLocationEntry *entry = (NemoLocationEntry*)gtk_widget_new (NEMO_TYPE_LOCATION_ENTRY, NULL);
 
-	entry = gtk_widget_new (NEMO_TYPE_LOCATION_ENTRY, NULL);
+	entry->cppObject = new nemo::LocationEntry{entry};	
 
-	return entry;
+	return (GtkWidget*)entry;
 }
 
 void
 nemo_location_entry_set_special_text (NemoLocationEntry *entry,
 					  const char            *special_text)
 {
-	entry->details->has_special_text = TRUE;
+	cppObject(entry).has_special_text = true;
 	
-	g_free (entry->details->special_text);
-	entry->details->special_text = g_strdup (special_text);
+	g_free (cppObject(entry).special_text);
+	cppObject(entry).special_text = g_strdup (special_text);
 
-	entry->details->setting_special_text = TRUE;
+	cppObject(entry).setting_special_text = true;
 	gtk_entry_set_text (GTK_ENTRY (entry), special_text);
-	entry->details->setting_special_text = FALSE;
+	cppObject(entry).setting_special_text = false;
 }
 
