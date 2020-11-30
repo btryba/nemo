@@ -24,6 +24,8 @@
  * Boston, MA 02110-1335, USA.
  */
 
+extern "C"
+{
 #include <config.h>
 #include "nemo-entry.h"
 
@@ -33,13 +35,28 @@
 #include <gdk/gdkkeysyms.h>
 #include <gtk/gtk.h>
 #include <glib/gi18n.h>
+}
 
-struct NemoEntryDetails {
-	gboolean user_edit;
-	gboolean special_tab_handling;
+namespace nemo
+{
+	struct Entry
+	{
+		NemoEntry* original;
 
-	guint select_idle_id;
-};
+		bool user_edit;
+		bool special_tab_handling;
+		unsigned int select_idle_id;
+
+		Entry(NemoEntry* original) 
+		: original{original}, user_edit{true}, special_tab_handling{true}, select_idle_id{1}
+		{}
+	};
+}
+
+static nemo::Entry& cppObject(void* original)
+{
+	return *(nemo::Entry*)(((NemoEntry*)original)->cppObject);
+}
 
 enum {
 	USER_CHANGED,
@@ -56,24 +73,19 @@ G_DEFINE_TYPE_WITH_CODE (NemoEntry, nemo_entry, GTK_TYPE_ENTRY,
 
 static GtkEditableInterface *parent_editable_interface = NULL;
 
-static void
-nemo_entry_init (NemoEntry *entry)
+static void nemo_entry_init (NemoEntry *entry)
 {
-	entry->details = g_new0 (NemoEntryDetails, 1);
-	
-	entry->details->user_edit = TRUE;
+	cppObject(entry).user_edit = TRUE;
 
 	nemo_undo_set_up_nemo_entry_for_undo (entry);
 }
 
-GtkWidget *
-nemo_entry_new (void)
+GtkWidget * nemo_entry_new (void)
 {
 	return gtk_widget_new (NEMO_TYPE_ENTRY, NULL);
 }
 
-GtkWidget *
-nemo_entry_new_with_max_length (guint16 max)
+GtkWidget * nemo_entry_new_with_max_length (guint16 max)
 {
 	GtkWidget *widget;
 
@@ -83,24 +95,21 @@ nemo_entry_new_with_max_length (guint16 max)
 	return widget;
 }
 
-static void
-nemo_entry_finalize (GObject *object)
+static void nemo_entry_finalize (GObject *object)
 {
 	NemoEntry *entry;
 
 	entry = NEMO_ENTRY (object);
 
-	if (entry->details->select_idle_id != 0) {
-		g_source_remove (entry->details->select_idle_id);
+	if (cppObject(entry).select_idle_id != 0)
+	{
+		g_source_remove (cppObject(entry).select_idle_id);
 	}
-	
-	g_free (entry->details);
 
 	G_OBJECT_CLASS (nemo_entry_parent_class)->finalize (object);
 }
 
-static gboolean
-nemo_entry_key_press (GtkWidget *widget, GdkEventKey *event)
+static gboolean nemo_entry_key_press (GtkWidget *widget, GdkEventKey *event)
 {
 	NemoEntry *entry;
 	GtkEditable *editable;
@@ -123,7 +132,7 @@ nemo_entry_key_press (GtkWidget *widget, GdkEventKey *event)
 		 * should position the insertion point at the end of
 		 * the selection.
 		 */
-		if (entry->details->special_tab_handling && gtk_editable_get_selection_bounds (editable, NULL, NULL)) {
+		if (cppObject(entry).special_tab_handling && gtk_editable_get_selection_bounds (editable, NULL, NULL)) {
 			position = strlen (gtk_entry_get_text (GTK_ENTRY (editable)));
 			gtk_editable_select_region (editable, position, position);
 			return TRUE;
@@ -152,8 +161,7 @@ nemo_entry_key_press (GtkWidget *widget, GdkEventKey *event)
 	
 }
 
-static gboolean
-nemo_entry_motion_notify (GtkWidget *widget, GdkEventMotion *event)
+static gboolean nemo_entry_motion_notify (GtkWidget *widget, GdkEventMotion *event)
 {
 	int result;
 	gboolean old_had, new_had;
@@ -184,8 +192,7 @@ nemo_entry_motion_notify (GtkWidget *widget, GdkEventMotion *event)
  * 
  * @entry: A NemoEntry
  **/
-void
-nemo_entry_select_all (NemoEntry *entry)
+void nemo_entry_select_all (NemoEntry *entry)
 {
 	g_return_if_fail (NEMO_IS_ENTRY (entry));
 
@@ -193,8 +200,7 @@ nemo_entry_select_all (NemoEntry *entry)
 	gtk_editable_select_region (GTK_EDITABLE (entry), 0, -1);
 }
 
-static gboolean
-select_all_at_idle (gpointer callback_data)
+static gboolean select_all_at_idle (gpointer callback_data)
 {
 	NemoEntry *entry;
 
@@ -202,7 +208,7 @@ select_all_at_idle (gpointer callback_data)
 
 	nemo_entry_select_all (entry);
 
-	entry->details->select_idle_id = 0;
+	cppObject(entry).select_idle_id = 0;
 	
 	return FALSE;
 }
@@ -217,8 +223,7 @@ select_all_at_idle (gpointer callback_data)
  * 
  * @entry: A NemoEntry
  **/
-void
-nemo_entry_select_all_at_idle (NemoEntry *entry)
+void nemo_entry_select_all_at_idle (NemoEntry *entry)
 {
 	g_return_if_fail (NEMO_IS_ENTRY (entry));
 
@@ -227,8 +232,8 @@ nemo_entry_select_all_at_idle (NemoEntry *entry)
 	 * to move the text cursor position to the end).
 	 */
 
-	if (entry->details->select_idle_id == 0) {
-		entry->details->select_idle_id = g_idle_add (select_all_at_idle, entry);
+	if (cppObject(entry).select_idle_id == 0) {
+		cppObject(entry).select_idle_id = g_idle_add (select_all_at_idle, entry);
 	}
 }
 
@@ -244,20 +249,18 @@ nemo_entry_select_all_at_idle (NemoEntry *entry)
  * @test: The text to set
  **/
 
-void
-nemo_entry_set_text (NemoEntry *entry, const gchar *text)
+void nemo_entry_set_text (NemoEntry *entry, const gchar *text)
 {
 	g_return_if_fail (NEMO_IS_ENTRY (entry));
 
-	entry->details->user_edit = FALSE;
+	cppObject(entry).user_edit = FALSE;
 	gtk_entry_set_text (GTK_ENTRY (entry), text);
-	entry->details->user_edit = TRUE;
+	cppObject(entry).user_edit = TRUE;
 	
 	g_signal_emit (entry, signals[SELECTION_CHANGED], 0);
 }
 
-static void
-nemo_entry_set_selection_bounds (GtkEditable *editable,
+static void nemo_entry_set_selection_bounds (GtkEditable *editable,
 				     int start_pos,
 				     int end_pos)
 {
@@ -266,8 +269,7 @@ nemo_entry_set_selection_bounds (GtkEditable *editable,
 	g_signal_emit (editable, signals[SELECTION_CHANGED], 0);
 }
 
-static gboolean
-nemo_entry_button_press (GtkWidget *widget,
+static gboolean nemo_entry_button_press (GtkWidget *widget,
 			     GdkEventButton *event)
 {
 	gboolean result;
@@ -281,8 +283,7 @@ nemo_entry_button_press (GtkWidget *widget,
 	return result;
 }
 
-static gboolean
-nemo_entry_button_release (GtkWidget *widget,
+static gboolean nemo_entry_button_release (GtkWidget *widget,
 			       GdkEventButton *event)
 {
 	gboolean result;
@@ -296,8 +297,7 @@ nemo_entry_button_release (GtkWidget *widget,
 	return result;
 }
 
-static void
-nemo_entry_insert_text (GtkEditable *editable, const gchar *text,
+static void nemo_entry_insert_text (GtkEditable *editable, const gchar *text,
 			    int length, int *position)
 {
 	NemoEntry *entry;
@@ -305,7 +305,7 @@ nemo_entry_insert_text (GtkEditable *editable, const gchar *text,
 	entry = NEMO_ENTRY(editable);
 
 	/* Fire off user changed signals */
-	if (entry->details->user_edit) {
+	if (cppObject(entry).user_edit) {
 		g_signal_emit (editable, signals[USER_CHANGED], 0);
 	}
 
@@ -314,15 +314,14 @@ nemo_entry_insert_text (GtkEditable *editable, const gchar *text,
 	g_signal_emit (editable, signals[SELECTION_CHANGED], 0);
 }
 			 		     
-static void 
-nemo_entry_delete_text (GtkEditable *editable, int start_pos, int end_pos)
+static void nemo_entry_delete_text (GtkEditable *editable, int start_pos, int end_pos)
 {
 	NemoEntry *entry;
 	
 	entry = NEMO_ENTRY (editable);
 
 	/* Fire off user changed signals */
-	if (entry->details->user_edit) {
+	if (cppObject(entry).user_edit) {
 		g_signal_emit (editable, signals[USER_CHANGED], 0);
 	}
 
@@ -339,8 +338,7 @@ nemo_entry_delete_text (GtkEditable *editable, int start_pos, int end_pos)
  * There's a FIXME comment that seems to be about this same issue in
  * gtk+/gtkselection.c, gtk_selection_clear.
  */
-static gboolean
-nemo_entry_selection_clear (GtkWidget *widget,
+static gboolean nemo_entry_selection_clear (GtkWidget *widget,
 			        GdkEventSelection *event)
 {
 	g_assert (NEMO_IS_ENTRY (widget));
@@ -352,10 +350,9 @@ nemo_entry_selection_clear (GtkWidget *widget,
 	return GTK_WIDGET_CLASS (nemo_entry_parent_class)->selection_clear_event (widget, event);
 }
 
-static void
-nemo_entry_editable_init (GtkEditableInterface *iface)
+static void nemo_entry_editable_init (GtkEditableInterface *iface)
 {
-	parent_editable_interface = g_type_interface_peek_parent (iface);
+	parent_editable_interface = (_GtkEditableInterface*)g_type_interface_peek_parent (iface);
 
 	iface->insert_text = nemo_entry_insert_text;
 	iface->delete_text = nemo_entry_delete_text;
@@ -367,14 +364,13 @@ nemo_entry_editable_init (GtkEditableInterface *iface)
 	g_assert (iface->get_chars != NULL);
 }
 
-static void
-nemo_entry_class_init (NemoEntryClass *class)
+static void nemo_entry_class_init (NemoEntryClass *klass)
 {
 	GtkWidgetClass *widget_class;
 	GObjectClass *gobject_class;
 
-	widget_class = GTK_WIDGET_CLASS (class);
-	gobject_class = G_OBJECT_CLASS (class);
+	widget_class = GTK_WIDGET_CLASS (klass);
+	gobject_class = G_OBJECT_CLASS (klass);
 		
 	widget_class->button_press_event = nemo_entry_button_press;
 	widget_class->button_release_event = nemo_entry_button_release;
@@ -387,7 +383,7 @@ nemo_entry_class_init (NemoEntryClass *class)
 	/* Set up signals */
 	signals[USER_CHANGED] = g_signal_new
 		("user_changed",
-		 G_TYPE_FROM_CLASS (class),
+		 G_TYPE_FROM_CLASS (klass),
 		 G_SIGNAL_RUN_LAST,
 		 G_STRUCT_OFFSET (NemoEntryClass, user_changed),
 		 NULL, NULL,
@@ -395,7 +391,7 @@ nemo_entry_class_init (NemoEntryClass *class)
 		 G_TYPE_NONE, 0);
 	signals[SELECTION_CHANGED] = g_signal_new
 		("selection_changed",
-		 G_TYPE_FROM_CLASS (class),
+		 G_TYPE_FROM_CLASS (klass),
 		 G_SIGNAL_RUN_LAST,
 		 G_STRUCT_OFFSET (NemoEntryClass, selection_changed),
 		 NULL, NULL,
@@ -403,13 +399,12 @@ nemo_entry_class_init (NemoEntryClass *class)
 		 G_TYPE_NONE, 0);
 }
 
-void
-nemo_entry_set_special_tab_handling (NemoEntry *entry,
+void nemo_entry_set_special_tab_handling (NemoEntry *entry,
 					 gboolean special_tab_handling)
 {
 	g_return_if_fail (NEMO_IS_ENTRY (entry));
 
-	entry->details->special_tab_handling = special_tab_handling;
+	cppObject(entry).special_tab_handling = special_tab_handling;
 }
 
 

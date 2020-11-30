@@ -30,7 +30,7 @@ nemo_private_sources = [
   'nemo-directory-async.c',
   'nemo-directory.c',
   'nemo-dnd.c',
-  'nemo-entry.c',
+  'nemo-entry.cpp',
   'nemo-file-changes-queue.c',
   'nemo-file-conflict-dialog.c',
   'nemo-file-dnd.c',

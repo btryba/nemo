@@ -43,11 +43,9 @@ G_BEGIN_DECLS
 #define NEMO_ENTRY_GET_CLASS(obj) \
   (G_TYPE_INSTANCE_GET_CLASS ((obj), NEMO_TYPE_ENTRY, NemoEntryClass))
 
-typedef struct NemoEntryDetails NemoEntryDetails;
-
 typedef struct {
 	GtkEntry parent;
-	NemoEntryDetails *details;
+	void* cppObject;
 } NemoEntry;
 
 typedef struct {
